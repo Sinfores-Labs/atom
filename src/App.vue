@@ -273,7 +273,7 @@ export default {
           </div>
         </div>
       </div>
-      <div class="flex-1 bg-white overflow-auto px-4 space-y-4 text-sm">
+      <div class="flex-1 bg-white overflow-auto px-4 pb-32 space-y-4 text-sm">
         <div>
           <label class="block">
             <input type="text" class="
@@ -642,11 +642,56 @@ export default {
         <!-- -------------------------------------------------- -->
         <div v-if="isLayerReady" class="pb-32 overflow-hidden" style="height: calc(100vh - 6.5rem);">
           <div v-if="viewBoard" class="space-y-12 px-4 py-4 pb-32 overflow-y-auto" style="height: calc(100vh - 6.5rem);">
+            <!-- Non-group -->
+            <div v-if="filterByGroup(0).length > 0">
+              <transition-group name="flip-list" tag="div" class="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                <Popper
+                  hover
+                  arrow
+                  placement="right"
+                  v-for="item in filterByGroup(0)"
+                  :key="item.id"
+                >
+                  <div
+                    @click="setActiveItem(item.id)"
+                    :class="[(activeItem && activeItem.id === item.id) ? 'ring-2 ring-offset-1 ring-purple-500 ring-opacity-40 bg-purple-50' : '']"
+                    class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded p-2"
+                  >
+                    <div class="h-12 w-12 border rounded flex-shrink-0" :class="[item.color]"></div>
+                    <div class="flex-1">
+                      <div class="font-bold text-xs line-clamp-1">{{ item.name }}</div>
+                      <div
+                        class="text-xs text-gray-500 line-clamp-1"
+                        v-for="field in item.fields"
+                        :key="field.id"
+                      >
+                        <div v-if="getFieldById(field.id).showInGrid">{{ field.value }}</div>
+                      </div>
+                      <div v-if="item.references.length > 0" class="text-xs text-gray-500 line-clamp-1">
+                        <span
+                          v-for="(reference, index) in item.references"
+                          :key="reference"
+                        >{{ getReferenceById(reference).name }}<span v-if="index < item.references.length - 1">, </span></span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <template #content>
+                    <div class="space-y-2">
+                      <div class="font-bold">{{ item.name }}</div>
+                      <div>Оценка: {{ item.score }}</div>
+                      <div v-if="item.note">{{ item.note }}</div>
+                    </div>
+                  </template>
+                </Popper>
+              </transition-group>
+            </div>
+            <!-- Group exist -->
             <div
               v-for="group in nonEmptyGroups"
               :key="group.id"
             >
-              <header class="font-bold border-t py-6 px-4">{{ group.name }}</header>
+              <header class="font-bold py-6 px-4">{{ group.name }}</header>
               <transition-group name="flip-list" tag="div" class="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 <Popper
                   hover
@@ -658,7 +703,7 @@ export default {
                   <div
                     @click="setActiveItem(item.id)"
                     :class="[(activeItem && activeItem.id === item.id) ? 'ring-2 ring-offset-1 ring-purple-500 ring-opacity-40 bg-purple-50' : '']"
-                    class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded p-1"
+                    class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded p-2"
                   >
                     <div class="h-12 w-12 border rounded flex-shrink-0" :class="[item.color]"></div>
                     <div class="flex-1">
@@ -701,7 +746,7 @@ export default {
               <div
                 @click="setActiveItem(item.id)"
                 :class="[(activeItem && activeItem.id === item.id) ? 'ring-2 ring-offset-1 ring-purple-500 ring-opacity-40 bg-purple-50' : '']"
-                class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded p-1"
+                class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded p-2"
               >
                 <div class="h-12 w-12 rounded flex-shrink-0 border" :class="[item.color]"></div>
                 <div class="flex-1">
@@ -739,10 +784,17 @@ export default {
       <!-- -------------------------------------------------- -->
       <div class="w-96 bg-gray-50 overflow-y-auto shadow-lg border-l rounded-tl-lg p-4" style="height: calc(100vh - 2.5rem);">
         <div v-if="activeItem" class="p-4 space-y-4">
-          <section class="space-y-2">
-            <div class="font-bold">{{ activeItem.name }}</div>
-            <div class="text-xs text-gray-600">
-              <Markdown :source="activeItem.note" />
+          <section class="space-x-2 flex">
+            <div class="flex-1 space-y-2">
+              <div class="font-bold">{{ activeItem.name }}</div>
+              <div class="text-xs text-gray-600">
+                <Markdown :source="activeItem.note" />
+              </div>
+            </div>
+            <div>
+              <div @click="activeItem = undefined" class="flex items-center justify-center rounded-lg h-8 w-8 bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700 cursor-pointer">
+                <XIcon class="w-5 h-5" />
+              </div>
             </div>
           </section>
 
