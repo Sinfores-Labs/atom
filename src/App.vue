@@ -1,6 +1,6 @@
 <script>
 import { ref, computed } from 'vue'
-import { XIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, CollectionIcon, ChevronUpIcon, ViewGridAddIcon, ViewGridIcon, ViewBoardsIcon } from '@heroicons/vue/outline'
+import { XIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, CollectionIcon, ChevronUpIcon, ViewGridAddIcon, ViewGridIcon, ViewBoardsIcon } from '@heroicons/vue/outline'
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
 import { saveAs } from 'file-saver'
@@ -15,14 +15,14 @@ import { swatches } from '/src/data/swatches'
 import emptyData from '/src/data/empty.json'
 
 export default {
-  components: { Popper, Markdown, XIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, ChevronUpIcon, ViewBoardsIcon, ViewGridAddIcon, ViewGridIcon, CollectionIcon, Popover, PopoverButton, PopoverPanel, Disclosure, DisclosureButton, DisclosurePanel },
+  components: { Popper, Markdown, XIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, ChevronUpIcon, ViewBoardsIcon, ViewGridAddIcon, ViewGridIcon, CollectionIcon, Popover, PopoverButton, PopoverPanel, Disclosure, DisclosureButton, DisclosurePanel },
 
   setup() {
     const viewBoard = ref(false)
 
     const db = ref(undefined)
     const isLayerReady = ref(false)
-    const { showFlyover, hideFlyover, toggleFlyover, about, groups, fields, load } = useFlyovers()
+    const { showFlyover, hideFlyover, toggleFlyover, about, references, groups, fields, load } = useFlyovers()
 
     const activeItem = ref(undefined)
     const setActiveItem = (id) => {
@@ -124,13 +124,38 @@ export default {
       db.value.groups.push(_newGroup)
       newGroup.value = ''
     }
+
+    const newReference = ref('')
+    const addNewReference= () => {
+      if (newReference.value === '') return
+      let lastIndex = 0
+      db.value.references.forEach(el => {
+        if (el.id > lastIndex) {
+          lastIndex = el.id
+        }
+      })
+      const _newReference = {
+        id: lastIndex + 1,
+        name: newReference.value
+      }
+      db.value.references.push(_newReference)
+      newReference.value = ''
+    }
     
     const searchQuery = useDebounceRef('', 400)
     const searchResults = computed(() => {
         if (isLayerReady.value && db.value && db.value.items) {
           const q = searchQuery.value.toLowerCase()
           if (q.length < 3) return db.value.items;
-          return db.value.items.filter(el => `${el.name}`.toLowerCase().indexOf(q) > -1)
+          return db.value.items.filter(el => {
+            let searchString = `${el.name}`
+            db.value.fields.forEach(field => {
+              if (field.searchable) {
+                searchString += el.fields.find(i => i.id === field.id).value
+              }
+            })
+            return (searchString.toLowerCase().indexOf(q) > -1)
+          })
         } else {
           return []
         }
@@ -143,7 +168,6 @@ export default {
         isLayerReady.value = false
         activeItem.value = undefined
         db.value = JSON.parse(event.target.result)
-        console.log(db.value)
         isLayerReady.value = true
       }
       reader.onerror = error => console.log(error)
@@ -172,6 +196,19 @@ export default {
       return db.value.groups.filter(group => searchResults.value.findIndex(item => item.groupId === group.id) > -1)
     })
 
+    const toggleReference = (referenceId) => {
+      if (activeItem.value.references.includes(referenceId)) {
+        const index = activeItem.value.references.findIndex(referenceId)
+        activeItem.value.references.splice(index, 1)
+      } else {
+        activeItem.value.references.push(referenceId)
+      }
+    }
+
+    const getReferenceById = (referenceId) => {
+      return db.value.references.find(el => el.id === referenceId)
+    }
+
     return {
       viewBoard,
       db,
@@ -180,12 +217,14 @@ export default {
       newItem, addNewItem,
       newField, addNewField,
       newGroup, addNewGroup,
+      newReference, addNewReference,
       getGroupById, getFieldById,
-      showFlyover, hideFlyover, toggleFlyover, about, groups, fields, load,
+      showFlyover, hideFlyover, toggleFlyover, about, references, groups, fields, load,
       searchQuery, searchResults,
       swatches,
       getRootProps, getInputProps, ...rest, saveJSON, loadDefault,
-      filterByGroup, nonEmptyGroups
+      filterByGroup, nonEmptyGroups,
+      toggleReference, getReferenceById
     }
   }
 }
@@ -210,6 +249,89 @@ export default {
       <div class="flex-1 bg-white overflow-auto px-4 space-y-4 text-sm">
         <p class="text-xs">Полезная штука, чтобы осуществлять декомпозицию сложных процессов, структурировано хранить информацию и т.д. Посмотрите видео ниже, как мы ей пользуемся для декомпозиции процессов или для аудита по ФСТЭК-239.</p>
         <p class="text-xs">Реализовано в рамках инициативы Security Expirience (SX) в компании Sinfores Group, направленной на облегчение труда рядовых специалистов по кибербезопасности, в рамках которой мы открываем доступ к своим инструментам, которые используются в проектной работе.</p>
+      </div>
+    </div>
+    <!-- -------------------------------------------------- -->
+
+    <!-- Flyover: Groups -->
+    <div v-if="isLayerReady" :class="references ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-80 w-96 h-large overflow-hidden flex flex-col border shadow-xl border-t-2 border-t-purple-500">
+      <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
+        <div class="flex-1 font-bold">Управление связями</div>
+        <div>
+          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFlyover('references')">
+            <XIcon class="h-4 w-4 text-gray-400"/>
+          </div>
+        </div>
+      </div>
+      <div class="flex-1 bg-white overflow-auto px-4 space-y-4 text-sm">
+        <div>
+          <label class="block">
+            <input type="text" class="
+                mt-1
+                block
+                w-full
+                rounded-md
+                border-gray-300
+                shadow-sm
+                text-sm
+                focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
+              " v-model="db.referenceName" placeholder="Название связи (например, инструменты)">
+          </label>
+        </div>
+        <Popover v-slot="{ open }" class="relative">
+          <PopoverButton
+            :class="open ? '' : 'opacity-90'"
+            class="rounded-full bg-gray-50 h-8 w-8 flex items-center justify-center cursor-pointer text-gray-500 hover:bg-gray-200 hover:text-gray-900"
+          >
+            <PlusSmIcon class="w-5 h-5" />
+          </PopoverButton>
+
+          <transition
+            enter-active-class="transition duration-200 ease-out"
+            enter-from-class="translate-y-1 opacity-0"
+            enter-to-class="translate-y-0 opacity-100"
+            leave-active-class="transition duration-150 ease-in"
+            leave-from-class="translate-y-0 opacity-100"
+            leave-to-class="translate-y-1 opacity-0"
+          >
+            <PopoverPanel class="absolute z-10 w-80 mt-1 transform -translate-x-1/2 left-40 sm:px-0 lg:max-w-3xl">
+              <div  class="bg-white overflow-hidden rounded shadow-lg ring-1 ring-black ring-opacity-5 p-4 space-y-4">
+                <p class="text-xs text-gray-600">Введите название</p>
+                <label class="block">
+                  <textarea class="
+                      mt-1
+                      block
+                      w-full
+                      rounded-md
+                      border-gray-300
+                      shadow-sm
+                      text-sm
+                      focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
+                    " rows="3" v-model="newReference"></textarea>
+                </label>
+                <button @click="addNewReference" class="bg-purple-600 text-white px-6 py-2 text-sm font-semibold rounded-lg">Создать</button>
+              </div>
+            </PopoverPanel>
+          </transition>
+        </Popover>
+        <div class="space-y-2">
+          <label
+            v-for="reference in db.references"
+            :key="reference.id"
+            class="block"
+          >
+            <input type="text" class="
+                mt-1
+                block
+                w-full
+                rounded-md
+                border-gray-300
+                shadow-sm
+                text-sm
+                focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
+              " v-model="reference.name">
+          </label>
+        </div>
       </div>
     </div>
     <!-- -------------------------------------------------- -->
@@ -509,12 +631,12 @@ export default {
         <!-- Grid -->
         <!-- -------------------------------------------------- -->
         <div v-if="isLayerReady" class="pb-32 overflow-hidden" style="height: calc(100vh - 6.5rem);">
-          <div v-if="viewBoard" class="space-y-12 px-6 py-4 pb-32 overflow-y-auto" style="height: calc(100vh - 6.5rem);">
+          <div v-if="viewBoard" class="space-y-12 px-4 py-4 pb-32 overflow-y-auto" style="height: calc(100vh - 6.5rem);">
             <div
               v-for="group in nonEmptyGroups"
               :key="group.id"
             >
-              <header class="font-bold border-t py-6 px-2">{{ group.name }}</header>
+              <header class="font-bold border-t py-6 px-4">{{ group.name }}</header>
               <transition-group name="flip-list" tag="div" class="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 <Popper
                   hover
@@ -525,10 +647,10 @@ export default {
                 >
                   <div
                     @click="setActiveItem(item.id)"
-                    :class="[(activeItem && activeItem.id === item.id) ? 'ring-2 ring-offset-1 ring-purple-500 ring-opacity-40' : '']"
+                    :class="[(activeItem && activeItem.id === item.id) ? 'ring-2 ring-offset-1 ring-purple-500 ring-opacity-40 bg-purple-50' : '']"
                     class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded p-1"
                   >
-                    <div class="h-8 w-8 rounded flex-shrink-0" :class="[item.color]"></div>
+                    <div class="h-12 w-12 border rounded flex-shrink-0" :class="[item.color]"></div>
                     <div class="flex-1">
                       <div class="font-bold text-xs line-clamp-1">{{ item.name }}</div>
                       <div
@@ -537,6 +659,12 @@ export default {
                         :key="field.id"
                       >
                         <div v-if="getFieldById(field.id).showInGrid">{{ field.value }}</div>
+                      </div>
+                      <div v-if="item.references.length > 0" class="text-xs text-gray-500 line-clamp-1">
+                        <span
+                          v-for="(reference, index) in item.references"
+                          :key="reference"
+                        >{{ getReferenceById(reference).name }}<span v-if="index < item.references.length - 1">, </span></span>
                       </div>
                     </div>
                   </div>
@@ -562,10 +690,10 @@ export default {
             >
               <div
                 @click="setActiveItem(item.id)"
-                :class="[(activeItem && activeItem.id === item.id) ? 'ring-2 ring-offset-1 ring-purple-500 ring-opacity-40' : '']"
+                :class="[(activeItem && activeItem.id === item.id) ? 'ring-2 ring-offset-1 ring-purple-500 ring-opacity-40 bg-purple-50' : '']"
                 class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded p-1"
               >
-                <div class="h-8 w-8 rounded flex-shrink-0" :class="[item.color]"></div>
+                <div class="h-12 w-12 rounded flex-shrink-0 border" :class="[item.color]"></div>
                 <div class="flex-1">
                   <div class="font-bold text-xs line-clamp-1">{{ item.name }}</div>
                   <div
@@ -574,6 +702,12 @@ export default {
                     :key="field.id"
                   >
                     <div v-if="getFieldById(field.id).showInGrid">{{ field.value }}</div>
+                  </div>
+                  <div v-if="item.references.length > 0" class="text-xs text-gray-500 line-clamp-1">
+                    <span
+                      v-for="(reference, index) in item.references"
+                      :key="reference"
+                    >{{ getReferenceById(reference).name }}<span v-if="index < item.references.length - 1">, </span></span>
                   </div>
                 </div>
               </div>
@@ -717,6 +851,65 @@ export default {
                 </transition>
               </Popover>
             </div>
+            <!-- References -->
+            <div class="py-4">
+              <header class="flex items-center">
+                <div v-if="db.referenceName" class="flex-1 text-xs text-gray-700">{{ db.referenceName }}</div>
+                <div v-else class="flex-1 text-xs text-gray-700">Связи</div>
+                <Popover v-slot="{ open }" class="relative">
+                  <PopoverButton
+                    :class="open ? '' : 'opacity-90'"
+                    class="rounded-lg bg-gray-50 h-8 w-8 flex items-center justify-center cursor-pointer text-gray-500 hover:bg-gray-200 hover:text-gray-900"
+                  >
+                    <AdjustmentsIcon class="w-5 h-5" />
+                  </PopoverButton>
+
+                  <transition
+                    enter-active-class="transition duration-200 ease-out"
+                    enter-from-class="translate-y-1 opacity-0"
+                    enter-to-class="translate-y-0 opacity-100"
+                    leave-active-class="transition duration-150 ease-in"
+                    leave-from-class="translate-y-0 opacity-100"
+                    leave-to-class="translate-y-1 opacity-0"
+                  >
+                    <PopoverPanel class="absolute z-10 w-80 mt-1 transform -translate-x-full left-8 sm:px-0 lg:max-w-3xl">
+                      <div class="bg-white overflow-hidden rounded shadow-lg ring-1 ring-black ring-opacity-5 p-4 space-y-4 flex flex-col">
+                        <div class="h-96 overflow-y-auto">
+                          <div
+                            v-for="reference in db.references"
+                            :key="reference.id"
+                          >
+                            <label class="inline-flex items-center">
+                              <input type="checkbox" class="
+                                  rounded
+                                  border-gray-300
+                                  text-purple-600
+                                  shadow-sm
+                                  focus:border-purple-300
+                                  focus:ring
+                                  focus:ring-offset-0
+                                  focus:ring-purple-200
+                                  focus:ring-opacity-50
+                                " :checked="activeItem.references.includes(reference.id)" @click="toggleReference(reference.id)">
+                              <span class="ml-2 text-sm line-clamp-1">{{ reference.name }}</span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </PopoverPanel>
+                  </transition>
+                </Popover>
+              </header>
+              <div class="space-y-1">
+                <div
+                  v-for="reference in activeItem.references"
+                  :key="reference"
+                  class="font-bold text-sm"
+                >
+                  {{ getReferenceById(reference).name }}
+                </div>
+              </div>
+            </div>
             <!-- Comments -->
             <div>
               <label class="block">
@@ -756,6 +949,17 @@ export default {
 
           <hr />
 
+          <div v-if="activeItem.references.length > 0" class="text-xs space-y-2">
+            <header v-if="db.referenceName" class="uppercase font-bold text-gray-500">{{ db.referenceName}}</header>
+            <header v-else class="uppercase font-bold text-gray-500">Связи</header>
+            <div>
+              <span
+                v-for="(reference, index) in activeItem.references"
+                :key="reference"
+              >{{ getReferenceById(reference).name }}<span v-if="index < activeItem.references.length - 1">, </span></span>
+            </div>
+          </div>
+
           <section
             v-for="field in activeItem.fields"
             :key="field.id"
@@ -781,6 +985,13 @@ export default {
       <!-- Main menu -->
       <!-- -------------------------------------------------- -->
       <div class="flex items-center space-x-2 border-b-2 border-transparent">
+        <!-- References -->
+        <div @click="toggleFlyover('references')" v-if="isLayerReady" :class="[references ? 'border-purple-500' : 'border-transparent']" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
+          <LinkIcon class="w-5 h-5" aria-hidden="true" />
+          <div v-if="db.referenceName">{{ db.referenceName }}</div>
+          <div v-else>Связи</div>
+          
+        </div>
         <!-- Groups -->
         <div @click="toggleFlyover('groups')" v-if="isLayerReady" :class="[groups ? 'border-purple-500' : 'border-transparent']" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
           <ViewGridAddIcon class="w-5 h-5" aria-hidden="true" />
