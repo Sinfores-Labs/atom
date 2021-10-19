@@ -1,6 +1,6 @@
 <script>
 import { ref, computed } from 'vue'
-import { XIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, CollectionIcon, ChevronUpIcon, ViewGridAddIcon } from '@heroicons/vue/outline'
+import { XIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, CollectionIcon, ChevronUpIcon, ViewGridAddIcon, ViewGridIcon, ViewBoardsIcon } from '@heroicons/vue/outline'
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
 import { saveAs } from 'file-saver'
@@ -15,9 +15,11 @@ import { swatches } from '/src/data/swatches'
 import emptyData from '/src/data/empty.json'
 
 export default {
-  components: { Popper, Markdown, XIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, ChevronUpIcon, ViewGridAddIcon, CollectionIcon, Popover, PopoverButton, PopoverPanel, Disclosure, DisclosureButton, DisclosurePanel },
+  components: { Popper, Markdown, XIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, ChevronUpIcon, ViewBoardsIcon, ViewGridAddIcon, ViewGridIcon, CollectionIcon, Popover, PopoverButton, PopoverPanel, Disclosure, DisclosureButton, DisclosurePanel },
 
   setup() {
+    const viewBoard = ref(false)
+
     const db = ref(undefined)
     const isLayerReady = ref(false)
     const { showFlyover, hideFlyover, toggleFlyover, about, groups, fields, load } = useFlyovers()
@@ -125,24 +127,30 @@ export default {
     
     const searchQuery = useDebounceRef('', 400)
     const searchResults = computed(() => {
-        const q = searchQuery.value.toLowerCase()
-        if (q.length < 3) return db.value.items;
-        return db.value.items.filter(el => `${el.name}`.toLowerCase().indexOf(q) > -1)
+        if (isLayerReady.value && db.value && db.value.items) {
+          const q = searchQuery.value.toLowerCase()
+          if (q.length < 3) return db.value.items;
+          return db.value.items.filter(el => `${el.name}`.toLowerCase().indexOf(q) > -1)
+        } else {
+          return []
+        }
     })
 
     let sourceJSONFile = undefined
     const loadJSON = () => {
       let reader = new FileReader()
       reader.onload = event => {
-        db.value = JSON.parse(event.target.result);
-        isLayerReady.value = true
+        isLayerReady.value = false
         activeItem.value = undefined
+        db.value = JSON.parse(event.target.result)
+        console.log(db.value)
+        isLayerReady.value = true
       }
       reader.onerror = error => console.log(error)
       reader.readAsText(sourceJSONFile)
     }
     const loadDefault = () => {
-      db.value = emptyData
+      db.value = JSON.parse(JSON.stringify(emptyData))
       isLayerReady.value = true
       activeItem.value = undefined
     }
@@ -156,7 +164,16 @@ export default {
       }
     };
 
+    const filterByGroup = (id) => {
+      return searchResults.value.filter(el => el.groupId === parseInt(id))
+    }
+
+    const nonEmptyGroups = computed(() => {
+      return db.value.groups.filter(group => searchResults.value.findIndex(item => item.groupId === group.id) > -1)
+    })
+
     return {
+      viewBoard,
       db,
       isLayerReady,
       activeItem, setActiveItem, isAdditionalFieldsVisible,
@@ -167,7 +184,8 @@ export default {
       showFlyover, hideFlyover, toggleFlyover, about, groups, fields, load,
       searchQuery, searchResults,
       swatches,
-      getRootProps, getInputProps, ...rest, saveJSON, loadDefault
+      getRootProps, getInputProps, ...rest, saveJSON, loadDefault,
+      filterByGroup, nonEmptyGroups
     }
   }
 }
@@ -443,11 +461,15 @@ export default {
               />
             </label>
           </div>
-          <div>
+          <div class="flex items-center space-x-2">
+            <div class="rounded-lg bg-gray-50 h-8 w-8 flex items-center justify-center cursor-pointer text-gray-500 hover:bg-gray-200 hover:text-gray-900">
+              <ViewGridIcon v-if="viewBoard" class="w-5 h-5" @click="viewBoard = false" />
+              <ViewBoardsIcon v-else class="w-5 h-5" @click="viewBoard = true" />
+            </div>
             <Popover v-slot="{ open }" class="relative">
               <PopoverButton
                 :class="open ? '' : 'opacity-90'"
-                class="rounded-full bg-gray-50 h-8 w-8 flex items-center justify-center cursor-pointer text-gray-500 hover:bg-gray-200 hover:text-gray-900"
+                class="rounded-lg bg-gray-50 h-8 w-8 flex items-center justify-center cursor-pointer text-gray-500 hover:bg-gray-200 hover:text-gray-900"
               >
                 <PlusSmIcon class="w-5 h-5" />
               </PopoverButton>
@@ -486,8 +508,51 @@ export default {
 
         <!-- Grid -->
         <!-- -------------------------------------------------- -->
-        <div v-if="isLayerReady" class="flex-1 overflow-auto p-4 pb-32">
-          <transition-group name="flip-list" tag="div" v-if="isLayerReady" class="grid grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-1">
+        <div v-if="isLayerReady" class="pb-32 overflow-hidden" style="height: calc(100vh - 6.5rem);">
+          <div v-if="viewBoard" class="space-y-12 px-6 py-4 pb-32 overflow-y-auto" style="height: calc(100vh - 6.5rem);">
+            <div
+              v-for="group in nonEmptyGroups"
+              :key="group.id"
+            >
+              <header class="font-bold border-t py-6 px-2">{{ group.name }}</header>
+              <transition-group name="flip-list" tag="div" class="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                <Popper
+                  hover
+                  arrow
+                  placement="right"
+                  v-for="item in filterByGroup(group.id)"
+                  :key="item.id"
+                >
+                  <div
+                    @click="setActiveItem(item.id)"
+                    :class="[(activeItem && activeItem.id === item.id) ? 'ring-2 ring-offset-1 ring-purple-500 ring-opacity-40' : '']"
+                    class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded p-1"
+                  >
+                    <div class="h-8 w-8 rounded flex-shrink-0" :class="[item.color]"></div>
+                    <div class="flex-1">
+                      <div class="font-bold text-xs line-clamp-1">{{ item.name }}</div>
+                      <div
+                        class="text-xs text-gray-500 line-clamp-1"
+                        v-for="field in item.fields"
+                        :key="field.id"
+                      >
+                        <div v-if="getFieldById(field.id).showInGrid">{{ field.value }}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <template #content>
+                    <div class="space-y-2">
+                      <div class="font-bold">{{ item.name }}</div>
+                      <div>Оценка: {{ item.score }}</div>
+                      <div v-if="item.note">{{ item.note }}</div>
+                    </div>
+                  </template>
+                </Popper>
+              </transition-group>
+            </div>
+          </div>
+          <transition-group v-else name="flip-list" tag="div" class="p-4 grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             <Popper
               hover
               arrow
@@ -500,8 +565,17 @@ export default {
                 :class="[(activeItem && activeItem.id === item.id) ? 'ring-2 ring-offset-1 ring-purple-500 ring-opacity-40' : '']"
                 class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded p-1"
               >
-                <div class="h-8 w-8 rounded" :class="[item.color]"></div>
-                <div class="flex-1 font-bold text-xs line-clamp-2">{{ item.name }}</div>
+                <div class="h-8 w-8 rounded flex-shrink-0" :class="[item.color]"></div>
+                <div class="flex-1">
+                  <div class="font-bold text-xs line-clamp-1">{{ item.name }}</div>
+                  <div
+                    class="text-xs text-gray-500 line-clamp-1"
+                    v-for="field in item.fields"
+                    :key="field.id"
+                  >
+                    <div v-if="getFieldById(field.id).showInGrid">{{ field.value }}</div>
+                  </div>
+                </div>
               </div>
 
               <template #content>
@@ -521,8 +595,11 @@ export default {
       <!-- -------------------------------------------------- -->
       <div class="w-96 bg-gray-50 overflow-y-auto shadow-lg border-l rounded-tl-lg p-4" style="height: calc(100vh - 2.5rem);">
         <div v-if="activeItem" class="p-4 space-y-4">
-          <section>
+          <section class="space-y-2">
             <div class="font-bold">{{ activeItem.name }}</div>
+            <div class="text-xs text-gray-600">
+              <Markdown :source="activeItem.note" />
+            </div>
           </section>
 
           <hr />
@@ -582,6 +659,22 @@ export default {
           </div>
 
           <div v-if="isAdditionalFieldsVisible" class="space-y-2">
+            <!-- Name -->
+            <div>
+              <label class="block">
+                <span class="text-gray-700 text-sm">Название</span>
+                <input type="text" class="
+                    mt-1
+                    block
+                    w-full
+                    rounded-md
+                    border-gray-300
+                    shadow-sm
+                    text-sm
+                    focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
+                  " v-model="activeItem.name">
+              </label>
+            </div>
             <!-- Group -->
             <div>
               <Popover v-slot="{ open }" class="relative">
