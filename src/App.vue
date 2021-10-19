@@ -78,6 +78,7 @@ export default {
       }
       db.value.items.push(newAtom)
       newItem.value = ''
+      activeItem.value = db.value.items.find(el => el.id === newAtom.id)
     }
     const deleteItem = () => {
       if (activeItem.value) {
@@ -470,7 +471,7 @@ export default {
           <DisclosureButton
             class="flex justify-between w-full px-4 py-2 text-sm font-medium text-left text-purple-900 bg-purple-100 rounded-lg hover:bg-purple-200 focus:outline-none focus-visible:ring focus-visible:ring-purple-500 focus-visible:ring-opacity-75"
           >
-            <span class="truncate">{{ field.name }}</span>
+            <span class="line-clamp-1">{{ field.name }}</span>
             <ChevronUpIcon
               :class="open ? 'transform rotate-180' : ''"
               class="w-5 h-5 text-purple-500"
@@ -880,8 +881,8 @@ export default {
                 >
                   <div class="flex items-center space-x-2">
                     <div class="text-sm font-bold">Группа:</div>
-                    <div class="text-sm truncate" v-if="activeItem.groupId">{{ getGroupById(activeItem.groupId).name }}</div>
-                    <div class="text-sm truncate" v-else>Не выбрана</div>
+                    <div class="text-sm line-clamp-1" v-if="activeItem.groupId">{{ getGroupById(activeItem.groupId).name }}</div>
+                    <div class="text-sm line-clamp-1" v-else>Не выбрана</div>
                   </div>
                   <ChevronDownIcon
                     :class="open ? '' : 'text-opacity-70'"
@@ -900,12 +901,12 @@ export default {
                 >
                   <PopoverPanel class="absolute z-10 w-80 mt-1 transform -translate-x-1/2 left-40 sm:px-0 lg:max-w-3xl">
                     <div class="bg-white overflow-auto rounded shadow-lg ring-1 ring-black ring-opacity-5 p-2">
-                      <div @click="activeItem.groupId = 0" :class="[0 === activeItem.groupId ? 'font-bold' : '']" class="p-2 text-sm hover:bg-gray-100 cursor-pointer rounded-lg truncate">Без группы</div>
+                      <div @click="activeItem.groupId = 0" :class="[0 === activeItem.groupId ? 'font-bold' : '']" class="p-2 text-sm hover:bg-gray-100 cursor-pointer rounded-lg line-clamp-1">Без группы</div>
                       <div
                         v-for="group in db.groups"
                         :key="group.id"
                         :class="[group.id === activeItem.groupId ? 'font-bold' : '']"
-                        class="p-2 text-sm hover:bg-gray-100 cursor-pointer rounded-lg truncate"
+                        class="p-2 text-sm hover:bg-gray-100 cursor-pointer rounded-lg line-clamp-1"
                         @click="activeItem.groupId = group.id"
                       >{{ group.name }}</div>
                     </div>
