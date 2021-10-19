@@ -79,6 +79,16 @@ export default {
       db.value.items.push(newAtom)
       newItem.value = ''
     }
+    const deleteItem = () => {
+      if (activeItem.value) {
+        const idToDelete = activeItem.value.id
+        activeItem.value = undefined
+        const index = db.value.items.findIndex(el => el.id === idToDelete)
+        if (index > -1) {
+          db.value.items.splice(index, 1)
+        }
+      }
+    }
 
     const newField = ref('')
     const addNewField = () => {
@@ -214,7 +224,7 @@ export default {
       db,
       isLayerReady,
       activeItem, setActiveItem, isAdditionalFieldsVisible,
-      newItem, addNewItem,
+      newItem, addNewItem, deleteItem,
       newField, addNewField,
       newGroup, addNewGroup,
       newReference, addNewReference,
@@ -944,6 +954,9 @@ export default {
                     focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
                   " rows="6" v-model="field.value"></textarea>
               </label>
+            </div>
+            <div class="py-4">
+              <button @click="deleteItem()" class="cursor-pointer w-full bg-red-100 border border-red-300 text-red-700 font-semibold text-xs py-2 flex justify-center rounded">Удалить</button>
             </div>
           </div>
 
