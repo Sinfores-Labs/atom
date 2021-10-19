@@ -1,6 +1,6 @@
 <script>
 import { ref, computed } from 'vue'
-import { XIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, CollectionIcon, ChevronUpIcon, ViewGridAddIcon, ViewGridIcon, ViewBoardsIcon } from '@heroicons/vue/outline'
+import { XIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, CollectionIcon, ChevronUpIcon, ViewGridAddIcon, ViewGridIcon, ViewBoardsIcon } from '@heroicons/vue/outline'
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
 import { saveAs } from 'file-saver'
@@ -15,14 +15,14 @@ import { swatches } from '/src/data/swatches'
 import emptyData from '/src/data/empty.json'
 
 export default {
-  components: { Popper, Markdown, XIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, ChevronUpIcon, ViewBoardsIcon, ViewGridAddIcon, ViewGridIcon, CollectionIcon, Popover, PopoverButton, PopoverPanel, Disclosure, DisclosureButton, DisclosurePanel },
+  components: { Popper, Markdown, XIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, ChevronUpIcon, ViewBoardsIcon, ViewGridAddIcon, ViewGridIcon, CollectionIcon, Popover, PopoverButton, PopoverPanel, Disclosure, DisclosureButton, DisclosurePanel },
 
   setup() {
     const viewBoard = ref(false)
 
     const db = ref(undefined)
     const isLayerReady = ref(false)
-    const { showFlyover, hideFlyover, toggleFlyover, about, references, groups, fields, load } = useFlyovers()
+    const { showFlyover, hideFlyover, toggleFlyover, about, desc, references, groups, fields, load } = useFlyovers()
 
     const activeItem = ref(undefined)
     const setActiveItem = (id) => {
@@ -230,7 +230,7 @@ export default {
       newGroup, addNewGroup,
       newReference, addNewReference,
       getGroupById, getFieldById,
-      showFlyover, hideFlyover, toggleFlyover, about, references, groups, fields, load,
+      showFlyover, hideFlyover, toggleFlyover, about, desc, references, groups, fields, load,
       searchQuery, searchResults,
       swatches,
       getRootProps, getInputProps, ...rest, saveJSON, loadDefault,
@@ -260,6 +260,23 @@ export default {
       <div class="flex-1 bg-white overflow-auto px-4 space-y-4 text-sm">
         <p class="text-xs">Полезная штука, чтобы осуществлять декомпозицию сложных процессов, структурировано хранить информацию и т.д. Посмотрите видео ниже, как мы ей пользуемся для декомпозиции процессов или для аудита по ФСТЭК-239.</p>
         <p class="text-xs">Реализовано в рамках инициативы Security Expirience (SX) в компании Sinfores Group, направленной на облегчение труда рядовых специалистов по кибербезопасности, в рамках которой мы открываем доступ к своим инструментам, которые используются в проектной работе.</p>
+      </div>
+    </div>
+    <!-- -------------------------------------------------- -->
+
+    <!-- Flyover: Description -->
+    <div v-if="isLayerReady" :class="desc ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-108 w-96 h-96 overflow-hidden flex flex-col border shadow-xl border-t-2 border-t-purple-500">
+      <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
+        <div class="flex-1 font-bold">Описание</div>
+        <div>
+          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFlyover('desc')">
+            <XIcon class="h-4 w-4 text-gray-400"/>
+          </div>
+        </div>
+      </div>
+      <div class="flex-1 bg-white overflow-auto px-4 space-y-4 text-sm">
+        <p class="text-xs">Всего атомов: {{ db.items.length }}</p>
+        <p class="text-xs">Всего связей: {{ db.references.length }}</p>
       </div>
     </div>
     <!-- -------------------------------------------------- -->
@@ -583,7 +600,7 @@ export default {
       <div class="flex-1 flex flex-col">
         <!-- Search & Actions-->
         <!-- -------------------------------------------------- -->
-        <div v-if="isLayerReady" class="h-16 flex items-center justify-between px-4 space-x-4">
+        <div v-if="isLayerReady" class="h-16 flex items-center justify-between px-12 space-x-4">
           <div class="flex-1">
             <label class="block">
               <input
@@ -642,7 +659,7 @@ export default {
         <!-- Grid -->
         <!-- -------------------------------------------------- -->
         <div v-if="isLayerReady" class="pb-32 overflow-hidden" style="height: calc(100vh - 6.5rem);">
-          <div v-if="viewBoard" class="space-y-12 px-4 py-4 pb-32 overflow-y-auto" style="height: calc(100vh - 6.5rem);">
+          <div v-if="viewBoard" class="space-y-12 px-12 py-4 pb-32 overflow-y-auto" style="height: calc(100vh - 6.5rem);">
             <!-- Non-group -->
             <div v-if="filterByGroup(0).length > 0">
               <transition-group name="flip-list" tag="div" class="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -736,47 +753,49 @@ export default {
               </transition-group>
             </div>
           </div>
-          <transition-group v-else name="flip-list" tag="div" class="p-4 grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            <Popper
-              hover
-              arrow
-              placement="right"
-              v-for="item in searchResults"
-              :key="item.id"
-            >
-              <div
-                @click="setActiveItem(item.id)"
-                :class="[(activeItem && activeItem.id === item.id) ? 'ring-2 ring-offset-1 ring-purple-500 ring-opacity-40 bg-purple-50' : '']"
-                class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded p-2"
+          <div v-else style="height: calc(100vh - 6.5rem);" class="overflow-y-auto px-8">
+            <transition-group name="flip-list" tag="div" class="p-4 pt-12 pb-32 grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              <Popper
+                hover
+                arrow
+                placement="right"
+                v-for="item in searchResults"
+                :key="item.id"
               >
-                <div class="h-12 w-12 rounded flex-shrink-0 border" :class="[item.color]"></div>
-                <div class="flex-1">
-                  <div class="font-bold text-xs line-clamp-1">{{ item.name }}</div>
-                  <div
-                    class="text-xs text-gray-500 line-clamp-1"
-                    v-for="field in item.fields"
-                    :key="field.id"
-                  >
-                    <div v-if="getFieldById(field.id).showInGrid">{{ field.value }}</div>
-                  </div>
-                  <div v-if="item.references.length > 0" class="text-xs text-gray-500 line-clamp-1">
-                    <span
-                      v-for="(reference, index) in item.references"
-                      :key="reference"
-                    >{{ getReferenceById(reference).name }}<span v-if="index < item.references.length - 1">, </span></span>
+                <div
+                  @click="setActiveItem(item.id)"
+                  :class="[(activeItem && activeItem.id === item.id) ? 'ring-2 ring-offset-1 ring-purple-500 ring-opacity-40 bg-purple-50' : '']"
+                  class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded p-2"
+                >
+                  <div class="h-12 w-12 rounded flex-shrink-0 border" :class="[item.color]"></div>
+                  <div class="flex-1">
+                    <div class="font-bold text-xs line-clamp-1">{{ item.name }}</div>
+                    <div
+                      class="text-xs text-gray-500 line-clamp-1"
+                      v-for="field in item.fields"
+                      :key="field.id"
+                    >
+                      <div v-if="getFieldById(field.id).showInGrid">{{ field.value }}</div>
+                    </div>
+                    <div v-if="item.references.length > 0" class="text-xs text-gray-500 line-clamp-1">
+                      <span
+                        v-for="(reference, index) in item.references"
+                        :key="reference"
+                      >{{ getReferenceById(reference).name }}<span v-if="index < item.references.length - 1">, </span></span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <template #content>
-                <div class="space-y-2">
-                  <div class="font-bold">{{ item.name }}</div>
-                  <div>Оценка: {{ item.score }}</div>
-                  <div v-if="item.note">{{ item.note }}</div>
-                </div>
-              </template>
-            </Popper>
-          </transition-group>
+                <template #content>
+                  <div class="space-y-2">
+                    <div class="font-bold">{{ item.name }}</div>
+                    <div>Оценка: {{ item.score }}</div>
+                    <div v-if="item.note">{{ item.note }}</div>
+                  </div>
+                </template>
+              </Popper>
+            </transition-group>
+          </div>
         </div>
         <!-- -------------------------------------------------- -->
       </div>
@@ -1051,12 +1070,16 @@ export default {
       <!-- Main menu -->
       <!-- -------------------------------------------------- -->
       <div class="flex items-center space-x-2 border-b-2 border-transparent">
+        <!-- Description -->
+        <div @click="toggleFlyover('desc')" v-if="isLayerReady" :class="[desc ? 'border-purple-500' : 'border-transparent']" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
+          <StatusOnlineIcon class="w-5 h-5" aria-hidden="true" />
+          <div>Описание</div>
+        </div>
         <!-- References -->
         <div @click="toggleFlyover('references')" v-if="isLayerReady" :class="[references ? 'border-purple-500' : 'border-transparent']" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
           <LinkIcon class="w-5 h-5" aria-hidden="true" />
           <div v-if="db.referenceName">{{ db.referenceName }}</div>
           <div v-else>Связи</div>
-          
         </div>
         <!-- Groups -->
         <div @click="toggleFlyover('groups')" v-if="isLayerReady" :class="[groups ? 'border-purple-500' : 'border-transparent']" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
