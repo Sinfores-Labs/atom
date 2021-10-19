@@ -1,0 +1,103 @@
+{
+    "fields":
+    [
+        {
+            "id": 1,
+            "name": "Responsible",
+            "showInDetals": true,
+            "showInPopper": false,
+            "showInGrid": false,
+            "searchable": false,
+            "filterable": false
+        },
+        {
+            "id": 2,
+            "name": "Status",
+            "showInDetals": true,
+            "showInPopper": false,
+            "showInGrid": false,
+            "searchable": false,
+            "filterable": false
+        }
+    ],
+    "groups":
+    [
+        {
+            "id": 1,
+            "name": "Application Security"
+        },
+        {
+            "id": 2,
+            "name": "Vulnerabilities Management"
+        }
+    ],
+    "items":
+    [
+        {
+            "id": 1,
+            "name": "Some name",
+            "note": "Some note",
+            "color": "bg-gray-100",
+            "score": 0,
+            "groupId": 1,
+            "fields":
+            [
+                {
+                    "id": 1,
+                    "value": "Some value"
+                },
+                {
+                    "id": 2,
+                    "value": "Started"
+                }
+            ],
+            "references":
+            []
+        },
+        {
+            "id": 2,
+            "name": "Not so long name",
+            "note": "Some note",
+            "color": "bg-gray-100",
+            "score": 0,
+            "groupId": 1,
+            "fields":
+            [
+                {
+                    "id": 1,
+                    "value": "Some value"
+                },
+                {
+                    "id": 2,
+                    "value": "Started"
+                }
+            ],
+            "references":
+            []
+        },
+        {
+            "id": 3,
+            "name": "Velit quis fugiat sint laboris id amet commodo",
+            "note": "Some note",
+            "color": "bg-gray-100",
+            "score": 0,
+            "groupId": 2,
+            "fields":
+            [
+                {
+                    "id": 1,
+                    "value": "Some value"
+                },
+                {
+                    "id": 2,
+                    "value": "Started"
+                }
+            ],
+            "references":
+            []
+        }
+    ],
+    "referenceName": "",
+    "references":
+    []
+}
