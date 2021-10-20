@@ -1,6 +1,6 @@
 <script>
 import { ref, computed } from 'vue'
-import { XIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, CollectionIcon, ChevronUpIcon, ViewGridAddIcon, ViewGridIcon, ViewBoardsIcon } from '@heroicons/vue/outline'
+import { XIcon, FireIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, CollectionIcon, ChevronUpIcon, ViewGridAddIcon, ViewGridIcon, ViewBoardsIcon } from '@heroicons/vue/outline'
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
 import { saveAs } from 'file-saver'
@@ -15,10 +15,11 @@ import { swatches } from '/src/data/swatches'
 import emptyData from '/src/data/empty.json'
 
 export default {
-  components: { Popper, Markdown, XIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, ChevronUpIcon, ViewBoardsIcon, ViewGridAddIcon, ViewGridIcon, CollectionIcon, Popover, PopoverButton, PopoverPanel, Disclosure, DisclosureButton, DisclosurePanel },
+  components: { Popper, Markdown, XIcon, FireIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, ChevronUpIcon, ViewBoardsIcon, ViewGridAddIcon, ViewGridIcon, CollectionIcon, Popover, PopoverButton, PopoverPanel, Disclosure, DisclosureButton, DisclosurePanel },
 
   setup() {
     const viewBoard = ref(false)
+    const heatmap = ref(false)
 
     const db = ref(undefined)
     const isLayerReady = ref(false)
@@ -221,7 +222,7 @@ export default {
     }
 
     return {
-      viewBoard,
+      viewBoard, heatmap,
       db,
       isLayerReady,
       activeItem, setActiveItem, isAdditionalFieldsVisible,
@@ -616,6 +617,12 @@ export default {
               <ViewGridIcon v-if="viewBoard" class="w-5 h-5" @click="viewBoard = false" />
               <ViewBoardsIcon v-else class="w-5 h-5" @click="viewBoard = true" />
             </div>
+            <div
+              :class="[heatmap ? 'bg-purple-50 text-purple-500 border border-purple-100' : 'bg-gray-50 text-gray-500']"
+              class="rounded-lg h-8 w-8 flex items-center justify-center cursor-pointer text-gray-500 hover:bg-gray-200 hover:text-gray-900"
+            >
+              <FireIcon class="w-5 h-5" @click="heatmap = !heatmap" />
+            </div>
             <Popover v-slot="{ open }" class="relative">
               <PopoverButton
                 :class="open ? '' : 'opacity-90'"
@@ -659,14 +666,23 @@ export default {
         <!-- Grid -->
         <!-- -------------------------------------------------- -->
         <div v-if="isLayerReady" class="pb-32 overflow-hidden" style="height: calc(100vh - 6.5rem);">
-          <div v-if="viewBoard" class="space-y-12 px-12 py-4 pb-32 overflow-y-auto" style="height: calc(100vh - 6.5rem);">
+          <div v-if="viewBoard"
+            :class="[heatmap ? 'space-y-1' : 'space-y-12']"
+            class="px-12 py-4 pb-32 overflow-y-auto"
+            style="height: calc(100vh - 6.5rem);"
+          >
             <!-- Non-group -->
             <div v-if="filterByGroup(0).length > 0">
-              <transition-group name="flip-list" tag="div" class="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              <transition-group
+                name="flip-list"
+                tag="div"
+                class="p-4 pt-12 grid"
+                :class="[heatmap ? 'grid-cols-6 lg:grid-cols-7 xl:grid-cols-10 pb-4' : 'grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pb-32']"
+              >
                 <Popper
                   hover
                   arrow
-                  placement="right"
+                  placement="bottom"
                   v-for="item in filterByGroup(0)"
                   :key="item.id"
                 >
@@ -675,8 +691,13 @@ export default {
                     :class="[(activeItem && activeItem.id === item.id) ? 'ring-2 ring-offset-1 ring-purple-500 ring-opacity-40 bg-purple-50' : '']"
                     class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded p-2"
                   >
-                    <div class="h-12 w-12 border rounded flex-shrink-0" :class="[item.color]"></div>
-                    <div class="flex-1">
+                    <div
+                      class="h-12 w-12 rounded border flex items-center px-2"
+                      :class="[item.color, heatmap ? 'h-12 flex-1' : 'h-12 w-12 flex-shrink-0 ']"
+                    >
+                      <div v-if="heatmap" class="font-bold text-xs line-clamp-1">{{ item.name }}</div>
+                    </div>
+                    <div class="flex-1" v-if="!heatmap">
                       <div class="font-bold text-xs line-clamp-1">{{ item.name }}</div>
                       <div
                         class="text-xs text-gray-500 line-clamp-1"
@@ -709,12 +730,17 @@ export default {
               v-for="group in nonEmptyGroups"
               :key="group.id"
             >
-              <header class="font-bold py-6 px-4">{{ group.name }}</header>
-              <transition-group name="flip-list" tag="div" class="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              <header class="font-bold px-4" :class="[heatmap ? 'py-0 px-6 text-sm' : 'py-6']">{{ group.name }}</header>
+              <transition-group
+                name="flip-list"
+                tag="div"
+                class="p-4 grid"
+                :class="[heatmap ? 'grid-cols-6 lg:grid-cols-7 xl:grid-cols-10 pb-4 pt-4' : 'grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pb-32 pt-12']"
+              >
                 <Popper
                   hover
                   arrow
-                  placement="right"
+                  placement="bottom"
                   v-for="item in filterByGroup(group.id)"
                   :key="item.id"
                 >
@@ -723,8 +749,13 @@ export default {
                     :class="[(activeItem && activeItem.id === item.id) ? 'ring-2 ring-offset-1 ring-purple-500 ring-opacity-40 bg-purple-50' : '']"
                     class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded p-2"
                   >
-                    <div class="h-12 w-12 border rounded flex-shrink-0" :class="[item.color]"></div>
-                    <div class="flex-1">
+                    <div
+                      class="h-12 w-12 rounded border flex items-center px-2"
+                      :class="[item.color, heatmap ? 'h-12 flex-1' : 'h-12 w-12 flex-shrink-0 ']"
+                    >
+                      <div v-if="heatmap" class="font-bold text-xs line-clamp-1">{{ item.name }}</div>
+                    </div>
+                    <div class="flex-1" v-if="!heatmap">
                       <div class="font-bold text-xs line-clamp-1">{{ item.name }}</div>
                       <div
                         class="text-xs text-gray-500 line-clamp-1"
@@ -754,11 +785,16 @@ export default {
             </div>
           </div>
           <div v-else style="height: calc(100vh - 6.5rem);" class="overflow-y-auto px-8">
-            <transition-group name="flip-list" tag="div" class="p-4 pt-12 pb-32 grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <transition-group
+              name="flip-list"
+              tag="div"
+              class="p-4 pt-12 pb-32 grid"
+              :class="[heatmap ? 'grid-cols-6 lg:grid-cols-7 xl:grid-cols-10' : 'grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4']"
+            >
               <Popper
                 hover
                 arrow
-                placement="right"
+                placement="bottom"
                 v-for="item in searchResults"
                 :key="item.id"
               >
@@ -767,8 +803,13 @@ export default {
                   :class="[(activeItem && activeItem.id === item.id) ? 'ring-2 ring-offset-1 ring-purple-500 ring-opacity-40 bg-purple-50' : '']"
                   class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded p-2"
                 >
-                  <div class="h-12 w-12 rounded flex-shrink-0 border" :class="[item.color]"></div>
-                  <div class="flex-1">
+                  <div
+                    class="h-12 w-12 rounded border flex items-center px-2"
+                    :class="[item.color, heatmap ? 'h-12 flex-1' : 'h-12 w-12 flex-shrink-0 ']"
+                  >
+                    <div v-if="heatmap" class="font-bold text-xs line-clamp-1">{{ item.name }}</div>
+                  </div>
+                  <div class="flex-1" v-if="!heatmap">
                     <div class="font-bold text-xs line-clamp-1">{{ item.name }}</div>
                     <div
                       class="text-xs text-gray-500 line-clamp-1"
