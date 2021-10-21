@@ -12,3 +12,4 @@ This template should help get you started developing with Vue 3 in Vite. The tem
 
 - [Build Vue 3 Desktop Apps in Just 5 Minutes – Vite + Electron Quick Start Guide](https://learnvue.co/2021/05/build-vue-3-desktop-apps-in-just-5-minutes-vite-electron-quick-start-guide/)
 - [Quick Start Electron](https://www.electronjs.org/docs/latest/tutorial/quick-start#create-the-main-script-file)
+- [Updating Applications](https://www.electronjs.org/docs/latest/tutorial/updates)
