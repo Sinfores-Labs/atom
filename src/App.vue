@@ -210,7 +210,7 @@ export default {
 
     const toggleReference = (referenceId) => {
       if (activeItem.value.references.includes(referenceId)) {
-        const index = activeItem.value.references.findIndex(referenceId)
+        const index = activeItem.value.references.findIndex(el => el === referenceId)
         activeItem.value.references.splice(index, 1)
       } else {
         activeItem.value.references.push(referenceId)
