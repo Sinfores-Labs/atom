@@ -1,7 +1,11 @@
 {
   "name": "atom",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Sinfores-Labs/atom.git"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -20,6 +24,7 @@
     "@tailwindcss/line-clamp": "^0.2.2",
     "electron-squirrel-startup": "^1.0.0",
     "file-saver": "^2.0.5",
+    "update-electron-app": "^2.0.1",
     "vue": "^3.2.16",
     "vue3-dropzone": "^0.0.7",
     "vue3-markdown-it": "^1.0.9",
