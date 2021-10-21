@@ -259,8 +259,12 @@ export default {
         </div>
       </div>
       <div class="flex-1 bg-white overflow-auto px-4 space-y-4 text-sm">
-        <p class="text-xs">Полезная штука, чтобы осуществлять декомпозицию сложных процессов, структурировано хранить информацию и т.д. Посмотрите видео ниже, как мы ей пользуемся для декомпозиции процессов или для аудита по ФСТЭК-239.</p>
-        <p class="text-xs">Реализовано в рамках инициативы Security Expirience (SX) в компании Sinfores Group, направленной на облегчение труда рядовых специалистов по кибербезопасности, в рамках которой мы открываем доступ к своим инструментам, которые используются в проектной работе.</p>
+        <p class="text-xs">Полезная штука, чтобы осуществлять декомпозицию сложных процессов, структурировано хранить информацию и т.д.</p>
+        <p class="text-xs">Реализовано в рамках инициативы Security Expirience (SX) компании Sinfores Group. Инициатива направлена на облегчение труда рядовых специалистов по кибербезопасности. В рамках инициативы мы открываем доступ к своим инструментам, которые используются в проектной работе.</p>
+        <div class="bg-red-100 p-4 rounded border border-red-200 text-red-900 space-y-2 text-xs">
+          <header class="font-bold uppercase">Важно</header>
+          <p>Вся работа с данными осуществляется исключительно на Вашем компьютере. Они никуда не передаются и даже никакие cookies-файлы не используются. Поэтому не забывайте периодически сохранять Ваши модели, так как мы их восстановить не сможем.</p>
+        </div>
       </div>
     </div>
     <!-- -------------------------------------------------- -->
@@ -276,8 +280,33 @@ export default {
         </div>
       </div>
       <div class="flex-1 bg-white overflow-auto px-4 space-y-4 text-sm">
-        <p class="text-xs">Всего атомов: {{ db.items.length }}</p>
-        <p class="text-xs">Всего связей: {{ db.references.length }}</p>
+        <div class="space-y-2">
+          <label class="block">
+            <span class="text-gray-700">Название</span>
+            <input
+              v-model="db.model.name"
+              type="text"
+              class="text-sm mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              placeholder="Название">
+          </label>
+          <label class="block">
+            <span class="text-gray-700">Версия</span>
+            <input
+              v-model="db.model.version"
+              type="text"
+              class="text-sm mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              placeholder="Версия">
+          </label>
+          <label class="block">
+                <span class="text-gray-700">Описание</span>
+                <textarea
+                  v-model="db.model.description"
+                  class="text-sm mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                  rows="3"
+                ></textarea>
+              </label>
+        </div>
+        <p class="text-xs">Атомов: {{ db.items.length }}, связей: {{ db.references.length }}</p>
       </div>
     </div>
     <!-- -------------------------------------------------- -->
@@ -1098,6 +1127,13 @@ export default {
             </div>
           </section>
 
+        </div>
+        <div v-else>
+          <div v-if="isLayerReady" class="space-y-2 p-8">
+            <div class="font-bold">{{ db.model.name }}</div>
+            <div class="text-sm text-gray-600">{{ db.model.description }}</div>
+            <div v-if="db.model.version" class="text-xs text-gray-600 font-bold">Версия: {{ db.model.version }}</div>
+          </div>
         </div>
       </div>
       <!-- -------------------------------------------------- -->
