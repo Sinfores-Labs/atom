@@ -8,6 +8,9 @@ const basePath = () => {
   if (process.env.VITE_BUILD_MODE === 'electron') {
     return path.resolve(__dirname, './dist/')
   }
+  if (process.env.VITE_BUILD_MODE === 'release') {
+    return './'
+  }
   return '/atom/'
 }
 

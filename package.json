@@ -9,13 +9,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build-electron": "vite build --mode electron",
+    "build:electron": "vite build --mode electron",
     "serve": "vite preview",
-    "serve-electron": "vite build --mode electron && electron .",
-    "deploy": "vite build && gh-pages -d dist",
-    "start": "vite build --mode electron && electron-forge start",
-    "package": "vite build --mode electron && electron-forge package",
-    "make": "vite build --mode electron && electron-forge make"
+    "serve:electron": "vite build --mode electron && electron .",
+    "gh:deploy": "vite build && gh-pages -d dist",
+    "forge:start": "vite build --mode release && electron-forge start",
+    "forge:package": "vite build --mode release && electron-forge package",
+    "forge:make": "vite build --mode release && electron-forge make"
   },
   "dependencies": {
     "@headlessui/vue": "^1.4.1",
