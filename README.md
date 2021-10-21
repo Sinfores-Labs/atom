@@ -1,6 +1,9 @@
-# Vue 3 + Vite
+# ATOM
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Инструмент для моделирования, проведения аудитов и всего остального, что омжно разложиться на компоненты и проанализировать. Оперирует JSON-файлами, которые можно запихнуть в специально предназначенные для этого отдельные инструменты, которые могут на основе файла софздать какой-нибудь отчет (например, по аудиту ФСТЭК-239 или NIST 800-53).
+
+- [web-версия](https://sinfores-labs.github.io/atom/)
+- [MacOS-версия](https://github.com/Sinfores-Labs/atom/releases) - качайте последнюю версию (пока версии не подписываются, поэтому ждите от ОС предупреждений о безопасности, устранится в версии 1.0)
 
 ## Recommended IDE Setup
 
