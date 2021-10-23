@@ -12,6 +12,8 @@ import { useDebounceRef } from "/src/composables/debounce"
 import { useConvertors } from '/src/composables/convertors'
 import { useActiveLayer } from '/src/composables/activeLayer'
 import { usePopper } from '/src/composables/popper'
+import { useBoard } from '/src/composables/board'
+import { useHeatmap } from '/src/composables/heatmap'
 import { swatches } from '/src/data/swatches'
 
 import Grid from '/src/components/Grid.vue'
@@ -34,9 +36,9 @@ export default {
     const actualJSONVersion = 5
     const { showFlyover, hideFlyover, toggleFlyover, about, desc, layers, filters, references, groups, fields, load } = useFlyovers()
 
-    const viewBoard = ref(false)
+    const { board, toggleBoard } = useBoard()
     const { popper, togglePopper } = usePopper()
-    const heatmap = ref(false)
+    const { heatmap, toggleHeatmap } = useHeatmap()
 
     const db = ref(undefined)
     const { activeLayer, setActiveLayer } = useActiveLayer()
@@ -185,7 +187,9 @@ export default {
 
     return {
       actualJSONVersion,
-      viewBoard, popper, togglePopper, heatmap,
+      board, toggleBoard,
+      popper, togglePopper,
+      heatmap, toggleHeatmap,
       db, setDB,
       isLayerReady, setLayerReady, activeLayer,
       activeItem, setActiveItem, isAdditionalFieldsVisible, isWideDetails,
@@ -247,14 +251,14 @@ export default {
           </div>
           <div class="flex items-center space-x-2">
             <div class="rounded-lg bg-gray-50 h-8 w-8 flex items-center justify-center cursor-pointer text-gray-500 hover:bg-gray-200 hover:text-gray-900">
-              <ViewGridIcon v-if="viewBoard" class="w-5 h-5" @click="viewBoard = false" />
-              <ViewBoardsIcon v-else class="w-5 h-5" @click="viewBoard = true" />
+              <ViewGridIcon v-if="board" class="w-5 h-5" @click="toggleBoard()" />
+              <ViewBoardsIcon v-else class="w-5 h-5" @click="toggleBoard()" />
             </div>
             <div
               :class="[heatmap ? 'bg-purple-50 text-purple-500 border border-purple-100' : 'bg-gray-50 text-gray-500']"
               class="rounded-lg h-8 w-8 flex items-center justify-center cursor-pointer text-gray-500 hover:bg-gray-200 hover:text-gray-900"
             >
-              <FireIcon class="w-5 h-5" @click="heatmap = !heatmap" />
+              <FireIcon class="w-5 h-5" @click="toggleHeatmap()" />
             </div>
             <div
               :class="[popper ? 'bg-purple-50 text-purple-500 border border-purple-100' : 'bg-gray-50 text-gray-500']"
@@ -305,14 +309,13 @@ export default {
         <!-- Grid -->
         <!-- -------------------------------------------------- -->
         <div v-if="isLayerReady" class="pb-32 overflow-hidden" style="height: calc(100vh - 6.5rem);">
-          <div v-if="viewBoard"
+          <div v-if="board"
             class="px-2 py-4 pb-32 overflow-y-auto space-y-1"
             style="height: calc(100vh - 6.5rem);"
           >
             <!-- Non-group -->
             <Grid
               v-if="filterByGroup(0).length > 0"
-              :heatmap="heatmap"
               :items="filterByGroup(0)"
               :active-item="activeItem"
               :get-field-by-id-fn="getFieldById"
@@ -325,7 +328,6 @@ export default {
               v-for="group in nonEmptyGroups"
               :key="group.id"
               :header="group.name"
-              :heatmap="heatmap"
               :items="filterByGroup(group.id)"
               :active-item="activeItem"
               :get-field-by-id-fn="getFieldById"
@@ -336,7 +338,6 @@ export default {
           </div>
           <div v-else style="height: calc(100vh - 6.5rem);" class="overflow-y-auto p-8">
             <Grid
-              :heatmap="heatmap"
               :items="searchResults"
               :active-item="activeItem"
               :get-field-by-id-fn="getFieldById"

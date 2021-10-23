@@ -2,14 +2,12 @@
 import Popper from 'vue3-popper'
 import Item from '/src/components/Item.vue'
 import { usePopper } from '/src/composables/popper'
+import { useHeatmap } from '/src/composables/heatmap'
 
 export default {
     components: { Popper, Item },
 
     props: {
-        heatmap: {
-            type: Boolean
-        },
         items: {
             type: Array,
             default: () => ([])
@@ -34,9 +32,11 @@ export default {
 
     setup(props) {
         const { popper } = usePopper()
+        const { heatmap } = useHeatmap()
 
         return {
-            popper
+            popper,
+            heatmap
         }
     },
 }
