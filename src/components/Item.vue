@@ -1,4 +1,7 @@
 <script>
+import { useActiveLayer } from '/src/composables/activeLayer'
+import { usePopper } from '/src/composables/popper'
+
 export default {
     props: {
         item: {
@@ -23,12 +26,15 @@ export default {
     emits: ['set-active-item'],
 
     setup(props, { emit }) {
+        const { activeLayer } = useActiveLayer()
+        const { popper } = usePopper()
 
         const setActiveItem = () => {
             emit('set-active-item', props.item.id)
         }
 
         return {
+            activeLayer,
             setActiveItem
         }
     },
@@ -43,7 +49,7 @@ export default {
     >
         <div
             class="h-12 w-12 rounded border flex items-center px-2"
-            :class="[item.color, heatmap ? 'h-12 flex-1' : 'h-12 w-12 flex-shrink-0 ']"
+            :class="[item.layers.find(el => el.id === activeLayer.id).color, heatmap ? 'h-12 flex-1' : 'h-12 w-12 flex-shrink-0 ']"
         >
             <div v-if="heatmap" class="font-bold text-xs line-clamp-1">{{ item.name }}</div>
         </div>

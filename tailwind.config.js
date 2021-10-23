@@ -17,7 +17,9 @@ module.exports = {
         huge: "60rem"
       },
       spacing: {
+        '102': '28rem',
         '108': '32rem',
+        '112': '36rem',
         '120': '40rem',
         '132': '50rem'
       }

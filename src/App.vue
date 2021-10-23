@@ -1,6 +1,6 @@
 <script>
 import { ref, computed } from 'vue'
-import { XIcon, ChatAltIcon, FireIcon, FilterIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, CollectionIcon, ChevronUpIcon, ViewGridAddIcon, ViewGridIcon, ViewBoardsIcon } from '@heroicons/vue/outline'
+import { XIcon, DuplicateIcon, ChatAltIcon, FireIcon, FilterIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, CollectionIcon, ChevronUpIcon, ViewGridAddIcon, ViewGridIcon, ViewBoardsIcon } from '@heroicons/vue/outline'
 
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
@@ -10,6 +10,8 @@ import Markdown from 'vue3-markdown-it'
 import { useFlyovers } from '/src/composables/flyovers'
 import { useDebounceRef } from "/src/composables/debounce"
 import { useConvertors } from '/src/composables/convertors'
+import { useActiveLayer } from '/src/composables/activeLayer'
+import { usePopper } from '/src/composables/popper'
 import { swatches } from '/src/data/swatches'
 
 import Grid from '/src/components/Grid.vue'
@@ -18,6 +20,7 @@ import DetailsCustomFieldsEdit from '/src/components/DetailsCustomFieldsEdit.vue
 
 import FlyOverAbout from '/src/components/flyovers/About.vue'
 import FlyOverDescription from '/src/components/flyovers/Description.vue'
+import FlyOverLayers from '/src/components/flyovers/Layers.vue'
 import FlyOverFilters from '/src/components/flyovers/Filters.vue'
 import FlyOverReferences from '/src/components/flyovers/Reference.vue'
 import FlyOverGroups from '/src/components/flyovers/Groups.vue'
@@ -25,19 +28,24 @@ import FlyOverFields from '/src/components/flyovers/Fields.vue'
 import FlyOverLoad from '/src/components/flyovers/Load.vue'
 
 export default {
-  components: { FlyOverAbout, FlyOverDescription, FlyOverFilters, FlyOverReferences, FlyOverGroups, FlyOverFields, FlyOverLoad, Grid, DetailsCustomFields, DetailsCustomFieldsEdit, Markdown, XIcon, ChatAltIcon, FireIcon, FilterIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, ChevronUpIcon, ViewBoardsIcon, ViewGridAddIcon, ViewGridIcon, CollectionIcon, Popover, PopoverButton, PopoverPanel, Disclosure, DisclosureButton, DisclosurePanel },
+  components: { FlyOverAbout, FlyOverDescription, FlyOverLayers, FlyOverFilters, FlyOverReferences, FlyOverGroups, FlyOverFields, FlyOverLoad, Grid, DetailsCustomFields, DetailsCustomFieldsEdit, Markdown, XIcon, DuplicateIcon, ChatAltIcon, FireIcon, FilterIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, ChevronUpIcon, ViewBoardsIcon, ViewGridAddIcon, ViewGridIcon, CollectionIcon, Popover, PopoverButton, PopoverPanel, Disclosure, DisclosureButton, DisclosurePanel },
 
   setup() {
-    const actualJSONVersion = 3
-    const { showFlyover, hideFlyover, toggleFlyover, about, desc, filters, references, groups, fields, load } = useFlyovers()
+    const actualJSONVersion = 4
+    const { showFlyover, hideFlyover, toggleFlyover, about, desc, layers, filters, references, groups, fields, load } = useFlyovers()
 
     const viewBoard = ref(false)
-    const poppers = ref(false)
+    const { popper, togglePopper } = usePopper()
     const heatmap = ref(false)
 
     const db = ref(undefined)
+    const { activeLayer, setActiveLayer } = useActiveLayer()
     const { convert } = useConvertors()
-    const setDB = (value) => { db.value = value; convert(db, actualJSONVersion) }
+    const setDB = (value) => {
+      db.value = value;
+      convert(db, actualJSONVersion);
+      setActiveLayer(db.value.layers[0])
+    }
 
     const isLayerReady = ref(false)
     const setLayerReady = (value) => { isLayerReady.value = value }
@@ -171,13 +179,13 @@ export default {
 
     return {
       actualJSONVersion,
-      viewBoard, poppers, heatmap,
+      viewBoard, popper, togglePopper, heatmap,
       db, setDB,
-      isLayerReady, setLayerReady,
+      isLayerReady, setLayerReady, activeLayer,
       activeItem, setActiveItem, isAdditionalFieldsVisible, isWideDetails,
       newItem, addNewItem, deleteItem,
       getGroupById, getFieldById,
-      showFlyover, hideFlyover, toggleFlyover, about, desc, filters, references, groups, fields, load,
+      showFlyover, hideFlyover, toggleFlyover, about, desc, layers, filters, references, groups, fields, load,
       searchQuery, searchResults, selectedReferences, showWithoutReference, toggleShowWithoutReference,
       swatches,
       saveJSON,
@@ -195,6 +203,7 @@ export default {
     <!-- -------------------------------------------------- -->
     <fly-over-about />
     <fly-over-description v-if="isLayerReady" :db="db" />
+    <fly-over-layers v-if="isLayerReady" :db="db" />
     <fly-over-filters
       v-if="isLayerReady"
       :db="db"
@@ -242,10 +251,10 @@ export default {
               <FireIcon class="w-5 h-5" @click="heatmap = !heatmap" />
             </div>
             <div
-              :class="[poppers ? 'bg-purple-50 text-purple-500 border border-purple-100' : 'bg-gray-50 text-gray-500']"
+              :class="[popper ? 'bg-purple-50 text-purple-500 border border-purple-100' : 'bg-gray-50 text-gray-500']"
               class="rounded-lg h-8 w-8 flex items-center justify-center cursor-pointer text-gray-500 hover:bg-gray-200 hover:text-gray-900"
             >
-              <ChatAltIcon class="w-5 h-5" @click="poppers = !poppers" />
+              <ChatAltIcon class="w-5 h-5" @click="togglePopper()" />
             </div>
             <Popover v-slot="{ open }" class="relative">
               <PopoverButton
@@ -297,7 +306,6 @@ export default {
             <!-- Non-group -->
             <Grid
               v-if="filterByGroup(0).length > 0"
-              :poppers="poppers"
               :heatmap="heatmap"
               :items="filterByGroup(0)"
               :active-item="activeItem"
@@ -311,7 +319,6 @@ export default {
               v-for="group in nonEmptyGroups"
               :key="group.id"
               :header="group.name"
-              :poppers="poppers"
               :heatmap="heatmap"
               :items="filterByGroup(group.id)"
               :active-item="activeItem"
@@ -323,7 +330,6 @@ export default {
           </div>
           <div v-else style="height: calc(100vh - 6.5rem);" class="overflow-y-auto p-8">
             <Grid
-              :poppers="poppers"
               :heatmap="heatmap"
               :items="searchResults"
               :active-item="activeItem"
@@ -385,7 +391,7 @@ export default {
                   >
                     <div class="flex items-center space-x-2">
                       <div class="text-sm">Цвет</div>
-                      <div class="w-16 h-5 rounded border" :class="activeItem.color"></div>
+                      <div class="w-16 h-5 rounded border" :class="activeItem.layers.find(el => el.id === activeLayer.id).color"></div>
                     </div>
                     <ChevronDownIcon
                       :class="open ? '' : 'text-opacity-70'"
@@ -405,7 +411,7 @@ export default {
                     <PopoverPanel class="absolute z-10 w-80 mt-1 transform -translate-x-1/2 left-40 sm:px-0 lg:max-w-3xl">
                       <div class="bg-white overflow-hidden rounded shadow-lg ring-1 ring-black ring-opacity-5">
                         <div class="grid grid-cols-9 gap-1 p-4">
-                          <div @click="activeItem.color = swatch" v-for="(swatch, index) in swatches" :key="index" class="rounded cursor-pointer" :class="[activeItem.color === swatch ? 'ring-2 ring-offset-1 ring-black ring-opacity-30' : '', swatch, 'h-6']"></div>
+                          <div @click="activeItem.layers.find(el => el.id === activeLayer.id).color = swatch" v-for="(swatch, index) in swatches" :key="index" class="rounded cursor-pointer" :class="[activeItem.color === swatch ? 'ring-2 ring-offset-1 ring-black ring-opacity-30' : '', swatch, 'h-6']"></div>
                         </div>
                       </div>
                     </PopoverPanel>
@@ -421,7 +427,7 @@ export default {
                     border-gray-300
                     shadow-sm
                     focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
-                  " placeholder="Score" v-model="activeItem.score">
+                  " placeholder="Score" v-model="activeItem.layers.find(el => el.id === activeLayer.id).score">
               </label>
             </div>
 
@@ -560,7 +566,7 @@ export default {
                       shadow-sm
                       text-sm
                       focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
-                    " rows="6" v-model="activeItem.note"></textarea>
+                    " rows="6" v-model="activeItem.layers.find(el => el.id === activeLayer.id).note"></textarea>
                 </label>
               </div>
 
@@ -623,6 +629,11 @@ export default {
           <StatusOnlineIcon class="w-5 h-5" aria-hidden="true" />
           <div>Описание</div>
         </div>
+        <!-- Layers -->
+        <div @click="toggleFlyover('layers')" v-if="isLayerReady" :class="[layers ? 'border-purple-500' : 'border-transparent']" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer select-none font-semibold flex items-center space-x-2" type="button">
+          <CollectionIcon class="w-5 h-5" aria-hidden="true" />
+          <div>Слои</div>
+        </div>
         <!-- Filters -->
         <div @click="toggleFlyover('filters')" v-if="isLayerReady" :class="[filters ? 'border-purple-500' : 'border-transparent']" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer select-none font-semibold flex items-center space-x-2" type="button">
           <FilterIcon class="w-5 h-5" aria-hidden="true" />
@@ -641,7 +652,7 @@ export default {
         </div>
         <!-- Fields -->
         <div @click="toggleFlyover('fields')" v-if="isLayerReady" :class="[fields ? 'border-purple-500' : 'border-transparent']" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer select-none font-semibold flex items-center space-x-2" type="button">
-          <CollectionIcon class="w-5 h-5" aria-hidden="true" />
+          <DuplicateIcon class="w-5 h-5" aria-hidden="true" />
           <div>Поля</div>
         </div>
         <!-- Load -->

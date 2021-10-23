@@ -1,14 +1,12 @@
 <script>
 import Popper from 'vue3-popper'
 import Item from '/src/components/Item.vue'
+import { usePopper } from '/src/composables/popper'
 
 export default {
     components: { Popper, Item },
 
     props: {
-        poppers: {
-            type: Boolean
-        },
         heatmap: {
             type: Boolean
         },
@@ -34,7 +32,13 @@ export default {
         }
     },
 
-    setup(props) {},
+    setup(props) {
+        const { popper } = usePopper()
+
+        return {
+            popper
+        }
+    },
 }
 </script>
 
@@ -42,7 +46,7 @@ export default {
     <div>
         <header v-if="header" class="font-bold px-4" :class="[heatmap ? 'py-0 px-6 text-sm' : 'py-6']">{{ header }}</header>
         <transition-group
-            v-if="poppers"
+            v-if="popper"
             name="flip-list"
             tag="div"
             class="px-2 grid"

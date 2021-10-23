@@ -1,5 +1,4 @@
 <script>
-// import { watch } from 'vue'
 import { XIcon, ChevronUpIcon, PlusSmIcon } from '@heroicons/vue/outline'
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
 import { useFlyovers } from '/src/composables/flyovers'
@@ -32,10 +31,6 @@ export default {
         }
         loadSelected()
 
-        // watch(props.db.references, (prev, next) => {
-        //     loadSelected()
-        // })
-
         const toggleReference = (id, name) => {
             const refIndex = props.selectedReferences.findIndex(el => el === id)
             if (refIndex > -1) {
@@ -58,7 +53,7 @@ export default {
 </script>
 
 <template>
-    <div :class="filters ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-108 w-96 h-large overflow-hidden flex flex-col border shadow-xl border-t-2 border-t-purple-500">
+    <div :class="filters ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-102 w-96 h-large overflow-hidden flex flex-col border shadow-xl border-t-2 border-t-purple-500">
         <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
             <div class="flex-1 font-bold">Фильтры</div>
             <div>

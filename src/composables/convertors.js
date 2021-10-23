@@ -20,7 +20,7 @@ const convertorToVersion3 = (db) => {
 }
 
 const convertorToVersion4 = (db) => {
-    db.value["version"] = 2
+    db.value["version"] = 4
     // Adding layers. See #6 (Github)
     db.value["layers"] = [
         {
@@ -34,10 +34,12 @@ const convertorToVersion4 = (db) => {
                 id: 1,
                 color: el.color,
                 score: el.score,
+                note: el.note
             }
         ]
-        // delete el.color
-        // delete el.score
+        delete el.color
+        delete el.score
+        delete el.note
     })
 }
 

@@ -44,7 +44,7 @@ export default {
 </script>
 
 <template>
-    <div :class="groups ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-32 w-96 h-large overflow-hidden flex flex-col border shadow-xl border-t-2 border-t-purple-500">
+    <div :class="groups ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-60 w-96 h-large overflow-hidden flex flex-col border shadow-xl border-t-2 border-t-purple-500">
       <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
         <div class="flex-1 font-bold">Управление группами</div>
         <div>
