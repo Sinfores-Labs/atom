@@ -328,18 +328,17 @@ export default {
               class="overflow-y-auto px-8"
             />
           </div>
-          <Grid
-            v-else
-            :poppers="poppers"
-            :heatmap="heatmap"
-            :items="searchResults"
-            :active-item="activeItem"
-            :get-field-by-id-fn="getFieldById"
-            :get-reference-by-id-fn="getReferenceById"
-            :set-active-item-fn="setActiveItem"
-            style="height: calc(100vh - 6.5rem);"
-            class="overflow-y-auto px-8"
-          />
+          <div v-else style="height: calc(100vh - 6.5rem);" class="overflow-y-auto p-8">
+            <Grid
+              :poppers="poppers"
+              :heatmap="heatmap"
+              :items="searchResults"
+              :active-item="activeItem"
+              :get-field-by-id-fn="getFieldById"
+              :get-reference-by-id-fn="getReferenceById"
+              :set-active-item-fn="setActiveItem"
+            />
+          </div>
         </div>
         <!-- -------------------------------------------------- -->
       </div>
