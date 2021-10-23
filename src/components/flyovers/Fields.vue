@@ -26,10 +26,11 @@ export default {
 
     setup(props) {
         const newField = ref('')
-        const addNewField = () => {
+        
+        const add = () => {
             if (newField.value === '') return
             let lastIndex = 0
-            props.db.value.fields.forEach(el => {
+            props.db.fields.forEach(el => {
                 if (el.id > lastIndex) {
                 lastIndex = el.id
                 }
@@ -44,8 +45,8 @@ export default {
                 searchable: false,
                 filterable: false
             }
-            props.db.value.fields.push(_newField)
-            props.db.value.items.forEach(el => {
+            props.db.fields.push(_newField)
+            props.db.items.forEach(el => {
                 el.fields.push({
                 id: lastIndex + 1,
                 value: ''
@@ -54,9 +55,25 @@ export default {
             newField.value = ''
         }
 
+        const remove = (id) => {
+          const fieldIndex = props.db.fields.findIndex(el => el.id === id)
+          if (fieldIndex > -1) {
+            // At first delete field from items
+            props.db.items.forEach(item => {
+              const itemFieldIndex = item.fields.findIndex(el => el.id === id)
+              if (itemFieldIndex > -1) {
+                item.fields.splice(itemFieldIndex, 1)
+              }
+            })
+            // Finally delete field from schema
+            props.db.fields.splice(fieldIndex, 1)
+          }
+        }
+
         return {
             newField,
-            addNewField
+            add,
+            remove
         }
         
     },
@@ -100,7 +117,7 @@ export default {
                     v-model="newField"
                 ></textarea>
                 </label>
-                <button @click="addNewField" class="bg-purple-600 text-white px-6 py-2 text-sm font-semibold rounded-lg">Создать</button>
+                <button @click="add" class="bg-purple-600 text-white px-6 py-2 text-sm font-semibold rounded-lg">Создать</button>
               </div>
             </PopoverPanel>
           </transition>
@@ -171,7 +188,7 @@ export default {
                 <span class="ml-2">Показывать поле в сетке</span>
               </label>
             </div>
-                        <div>
+            <div>
               <label class="inline-flex items-center">
                 <input
                   type="checkbox"
@@ -190,6 +207,12 @@ export default {
                 >
                 <span class="ml-2">Учитывать поле при фильтрации</span>
               </label>
+            </div>
+            <div class="pt-4">
+              <button
+                @click="remove(field.id)"
+                class="bg-red-50 rounded-lg border cursor-pointer border-red-100 text-red-700 hover:bg-red-100 hover:text-red-900 px-4 py-1"
+              >Удалить</button>
             </div>
           </DisclosurePanel>
         </Disclosure>
