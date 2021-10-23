@@ -14,6 +14,7 @@ import { swatches } from '/src/data/swatches'
 
 import Grid from '/src/components/Grid.vue'
 import DetailsCustomFields from '/src/components/DetailsCustomFields.vue'
+import DetailsCustomFieldsEdit from '/src/components/DetailsCustomFieldsEdit.vue'
 
 import FlyOverAbout from '/src/components/flyovers/About.vue'
 import FlyOverDescription from '/src/components/flyovers/Description.vue'
@@ -23,10 +24,10 @@ import FlyOverFields from '/src/components/flyovers/Fields.vue'
 import FlyOverLoad from '/src/components/flyovers/Load.vue'
 
 export default {
-  components: { FlyOverAbout, FlyOverDescription, FlyOverReferences, FlyOverGroups, FlyOverFields, FlyOverLoad, Grid, DetailsCustomFields, Markdown, XIcon, ChatAltIcon, FireIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, ChevronUpIcon, ViewBoardsIcon, ViewGridAddIcon, ViewGridIcon, CollectionIcon, Popover, PopoverButton, PopoverPanel, Disclosure, DisclosureButton, DisclosurePanel },
+  components: { FlyOverAbout, FlyOverDescription, FlyOverReferences, FlyOverGroups, FlyOverFields, FlyOverLoad, Grid, DetailsCustomFields, DetailsCustomFieldsEdit, Markdown, XIcon, ChatAltIcon, FireIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, ChevronUpIcon, ViewBoardsIcon, ViewGridAddIcon, ViewGridIcon, CollectionIcon, Popover, PopoverButton, PopoverPanel, Disclosure, DisclosureButton, DisclosurePanel },
 
   setup() {
-    const actualJSONVersion = 2
+    const actualJSONVersion = 3
     const { showFlyover, hideFlyover, toggleFlyover, about, desc, references, groups, fields, load } = useFlyovers()
 
     const viewBoard = ref(false)
@@ -571,7 +572,11 @@ export default {
                 </label>
               </div>
               <!-- Custom fields -->
-              <div
+              <DetailsCustomFieldsEdit
+                :fields="activeItem.fields"
+                :get-field-by-id-fn="getFieldById"
+              />
+              <!-- <div
                 v-for="field in activeItem.fields"
                 :key="field.id"
               >
@@ -588,9 +593,9 @@ export default {
                       focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
                     " rows="6" v-model="field.value"></textarea>
                 </label>
-              </div>
+              </div> -->
               <div class="py-4">
-                <button @click="deleteItem()" class="cursor-pointer w-full bg-red-100 border border-red-300 text-red-700 font-semibold text-xs py-2 flex justify-center rounded">Удалить</button>
+                <button @click="deleteItem()" class="cursor-pointer w-full bg-red-50 border border-red-100 text-red-700 font-semibold text-xs py-2 flex justify-center rounded">Удалить</button>
               </div>
             </div>
 

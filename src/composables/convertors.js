@@ -12,6 +12,14 @@ const convertorToVersion2 = (db) => {
 }
 
 const convertorToVersion3 = (db) => {
+    // Added field type
+    db.value["version"] = 3
+    db.value.fields.forEach(field => {
+        field["type"] = "text"
+    })
+}
+
+const convertorToVersion4 = (db) => {
     db.value["version"] = 2
     // Adding layers. See #6 (Github)
     db.value["layers"] = [
@@ -42,6 +50,9 @@ const convert = (db, actualVersion) => {
     }
     if ((db.value.version === 2) && (actualVersion > 2)) {
         convertorToVersion3(db)
+    }
+    if ((db.value.version === 3) && (actualVersion > 3)) {
+        convertorToVersion4(db)
     }
 }
 
