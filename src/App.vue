@@ -13,6 +13,7 @@ import { useConvertors } from '/src/composables/convertors'
 import { swatches } from '/src/data/swatches'
 
 import Grid from '/src/components/Grid.vue'
+import DetailsCustomFields from '/src/components/DetailsCustomFields.vue'
 
 import FlyOverAbout from '/src/components/flyovers/About.vue'
 import FlyOverDescription from '/src/components/flyovers/Description.vue'
@@ -22,7 +23,7 @@ import FlyOverFields from '/src/components/flyovers/Fields.vue'
 import FlyOverLoad from '/src/components/flyovers/Load.vue'
 
 export default {
-  components: { FlyOverAbout, FlyOverDescription, FlyOverReferences, FlyOverGroups, FlyOverFields, FlyOverLoad, Grid, Markdown, XIcon, ChatAltIcon, FireIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, ChevronUpIcon, ViewBoardsIcon, ViewGridAddIcon, ViewGridIcon, CollectionIcon, Popover, PopoverButton, PopoverPanel, Disclosure, DisclosureButton, DisclosurePanel },
+  components: { FlyOverAbout, FlyOverDescription, FlyOverReferences, FlyOverGroups, FlyOverFields, FlyOverLoad, Grid, DetailsCustomFields, Markdown, XIcon, ChatAltIcon, FireIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, ChevronUpIcon, ViewBoardsIcon, ViewGridAddIcon, ViewGridIcon, CollectionIcon, Popover, PopoverButton, PopoverPanel, Disclosure, DisclosureButton, DisclosurePanel },
 
   setup() {
     const actualJSONVersion = 2
@@ -49,6 +50,7 @@ export default {
       }
     }
     const isAdditionalFieldsVisible = ref(false)
+    const isWideDetails = ref(false)
 
     const getGroupById = (id) => {
       if (db.value && db.value.groups) {
@@ -160,7 +162,7 @@ export default {
       viewBoard, poppers, heatmap,
       db, setDB,
       isLayerReady, setLayerReady,
-      activeItem, setActiveItem, isAdditionalFieldsVisible,
+      activeItem, setActiveItem, isAdditionalFieldsVisible, isWideDetails,
       newItem, addNewItem, deleteItem,
       getGroupById, getFieldById,
       showFlyover, hideFlyover, toggleFlyover, about, desc, references, groups, fields, load,
@@ -344,160 +346,60 @@ export default {
 
       <!-- Detais -->
       <!-- -------------------------------------------------- -->
-      <div class="w-96 bg-gray-50 overflow-y-auto shadow-lg border-l rounded-tl-lg p-4" style="height: calc(100vh - 2.5rem);">
-        <div v-if="activeItem" class="p-4 space-y-4">
-          <section class="space-x-2 flex">
-            <div class="flex-1 space-y-2">
-              <div class="font-bold">{{ activeItem.name }}</div>
-              <div class="text-xs text-gray-600">
-                <Markdown :source="activeItem.note" />
+      <div
+        :class="[isWideDetails ? 'w-132' : 'w-96']"
+        class="bg-gray-50 overflow-y-auto shadow-lg border-l rounded-tl-lg p-4 relative transition"
+        style="height: calc(100vh - 2.5rem);"
+      >
+        <!-- Button to toggle details window size -->
+        <div
+          @click="isWideDetails = !isWideDetails"
+          class="absolute top-5 w-8 h-8 left-5 bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700 rounded-full flex items-center justify-center cursor-pointer"
+        ><ChevronUpIcon class="h-5 w-5 transition-all" :class="[isWideDetails ? 'rotate-90' : '-rotate-90']" /></div>
+
+        <!-- Button to close active item -->
+        <div
+          v-if="activeItem"
+          @click="activeItem = undefined"
+          class="absolute top-5 w-8 h-8 right-5 bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700 rounded-full flex items-center justify-center cursor-pointer"
+        ><XIcon class="w-5 h-5" /></div>
+
+        <div v-if="activeItem" class="px-2 py-16 space-y-8">
+          <!-- Header -->
+          <section class="space-y-2">
+            <div class="font-bold" :class="[isWideDetails ? 'text-xl' : 'text-base']">{{ activeItem.name }}</div>
+              <!-- Custom fields -->
+              <div
+                v-for="field in activeItem.fields"
+                :key="field.id"
+              >
+                <div v-if="getFieldById(field.id).showInHeader && field.value" class="space-y-2">
+                  <div class="atom-prose font-semibold" :class="isWideDetails ? 'text-3xl' : 'text-base'">
+                    <Markdown :source="field.value" />
+                  </div>
+                </div>
               </div>
-            </div>
-            <div>
-              <div @click="activeItem = undefined" class="flex items-center justify-center rounded-lg h-8 w-8 bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700 cursor-pointer">
-                <XIcon class="w-5 h-5" />
-              </div>
-            </div>
           </section>
 
-          <!-- Custom fields -->
-          <section
-            v-for="field in activeItem.fields"
-            :key="field.id"
-          >
-            <div v-if="getFieldById(field.id).showInHeader && field.value" class="space-y-2">
-              <div class="atom-prose font-semibold">
-                <Markdown :source="field.value" />
-              </div>
-            </div>
-          </section>
+          <section class="border-t border-b py-4 space-y-4">
 
-          <hr />
-
-          <div class="flex items-center space-x-2">
-            <!-- Color picker -->
-            <div class="flex-1">
-              <Popover v-slot="{ open }" class="relative">
-                <PopoverButton
-                  :class="open ? '' : 'text-opacity-90'"
-                  class="w-full inline-flex items-center justify-between shadow px-3 py-3 text-base font-medium text-gray-900 bg-white rounded-md group hover:text-opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75"
-                >
-                  <div class="flex items-center space-x-2">
-                    <div class="text-sm">Цвет</div>
-                    <div class="w-16 h-5 rounded border" :class="activeItem.color"></div>
-                  </div>
-                  <ChevronDownIcon
-                    :class="open ? '' : 'text-opacity-70'"
-                    class="w-4 h-4 ml-2 text-gray-500 transition duration-150 ease-in-out group-hover:text-opacity-80"
-                    aria-hidden="true"
-                  />
-                </PopoverButton>
-
-                <transition
-                  enter-active-class="transition duration-200 ease-out"
-                  enter-from-class="translate-y-1 opacity-0"
-                  enter-to-class="translate-y-0 opacity-100"
-                  leave-active-class="transition duration-150 ease-in"
-                  leave-from-class="translate-y-0 opacity-100"
-                  leave-to-class="translate-y-1 opacity-0"
-                >
-                  <PopoverPanel class="absolute z-10 w-80 mt-1 transform -translate-x-1/2 left-40 sm:px-0 lg:max-w-3xl">
-                    <div class="bg-white overflow-hidden rounded shadow-lg ring-1 ring-black ring-opacity-5">
-                      <div class="grid grid-cols-9 gap-1 p-4">
-                        <div @click="activeItem.color = swatch" v-for="(swatch, index) in swatches" :key="index" class="rounded cursor-pointer" :class="[activeItem.color === swatch ? 'ring-2 ring-offset-1 ring-black ring-opacity-30' : '', swatch, 'h-6']"></div>
-                      </div>
-                    </div>
-                  </PopoverPanel>
-                </transition>
-              </Popover>
-            </div>
-            <!-- Score -->
-            <label class="block w-24">
-              <input type="text" class="
-                  block
-                  w-full
-                  rounded-md
-                  border-gray-300
-                  shadow-sm
-                  focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
-                " placeholder="Score" v-model="activeItem.score">
-            </label>
-          </div>
-
-          <div @click="isAdditionalFieldsVisible = !isAdditionalFieldsVisible" class="bg-gray-100 h-5 rounded cursor-pointer hover:bg-gray-200 flex justify-center items-center">
-            <ChevronDownIcon :class="isAdditionalFieldsVisible ? 'rotate-180' : ''" class="h-4 w-4 text-gray-600"></ChevronDownIcon>
-          </div>
-
-          <div v-if="isAdditionalFieldsVisible" class="space-y-2">
-            <!-- Name -->
-            <div>
-              <label class="block">
-                <span class="text-gray-700 text-sm">Название</span>
-                <input type="text" class="
-                    mt-1
-                    block
-                    w-full
-                    rounded-md
-                    border-gray-300
-                    shadow-sm
-                    text-sm
-                    focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
-                  " v-model="activeItem.name">
-              </label>
-            </div>
-            <!-- Group -->
-            <div>
-              <Popover v-slot="{ open }" class="relative">
-                <PopoverButton
-                  :class="open ? '' : 'text-opacity-90'"
-                  class="w-full inline-flex items-center justify-between shadow px-3 py-3 text-base font-medium text-gray-900 bg-white rounded-md group hover:text-opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75"
-                >
-                  <div class="flex items-center space-x-2">
-                    <div class="text-sm font-bold">Группа:</div>
-                    <div class="text-sm line-clamp-1" v-if="activeItem.groupId">{{ getGroupById(activeItem.groupId).name }}</div>
-                    <div class="text-sm line-clamp-1" v-else>Не выбрана</div>
-                  </div>
-                  <ChevronDownIcon
-                    :class="open ? '' : 'text-opacity-70'"
-                    class="w-4 h-4 ml-2 text-gray-500 transition duration-150 ease-in-out group-hover:text-opacity-80"
-                    aria-hidden="true"
-                  />
-                </PopoverButton>
-
-                <transition
-                  enter-active-class="transition duration-200 ease-out"
-                  enter-from-class="translate-y-1 opacity-0"
-                  enter-to-class="translate-y-0 opacity-100"
-                  leave-active-class="transition duration-150 ease-in"
-                  leave-from-class="translate-y-0 opacity-100"
-                  leave-to-class="translate-y-1 opacity-0"
-                >
-                  <PopoverPanel class="absolute z-10 w-80 mt-1 transform -translate-x-1/2 left-40 sm:px-0 lg:max-w-3xl">
-                    <div class="bg-white overflow-auto rounded shadow-lg ring-1 ring-black ring-opacity-5 p-2">
-                      <div @click="activeItem.groupId = 0" :class="[0 === activeItem.groupId ? 'font-bold' : '']" class="px-2 py-1 text-sm hover:bg-gray-100 cursor-pointer rounded-lg line-clamp-1">Без группы</div>
-                      <div
-                        v-for="group in db.groups"
-                        :key="group.id"
-                        :class="[group.id === activeItem.groupId ? 'font-bold' : '']"
-                        class="px-2 py-1 text-sm hover:bg-gray-100 cursor-pointer rounded-lg line-clamp-1"
-                        @click="activeItem.groupId = group.id"
-                      >{{ group.name }}</div>
-                    </div>
-                  </PopoverPanel>
-                </transition>
-              </Popover>
-            </div>
-            <!-- References -->
-            <div class="py-4">
-              <header class="flex items-center">
-                <div v-if="db.referenceName" class="flex-1 text-xs text-gray-700">{{ db.referenceName }}</div>
-                <div v-else class="flex-1 text-xs text-gray-700">Связи</div>
+            <div class="flex items-center space-x-2">
+              <!-- Color picker -->
+              <div class="flex-1">
                 <Popover v-slot="{ open }" class="relative">
                   <PopoverButton
-                    :class="open ? '' : 'opacity-90'"
-                    class="rounded-lg bg-gray-50 h-8 w-8 flex items-center justify-center cursor-pointer text-gray-500 hover:bg-gray-200 hover:text-gray-900"
+                    :class="open ? '' : 'text-opacity-90'"
+                    class="w-full inline-flex items-center justify-between shadow px-3 py-3 text-base font-medium text-gray-900 bg-white rounded-md group hover:text-opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75"
                   >
-                    <AdjustmentsIcon class="w-5 h-5" />
+                    <div class="flex items-center space-x-2">
+                      <div class="text-sm">Цвет</div>
+                      <div class="w-16 h-5 rounded border" :class="activeItem.color"></div>
+                    </div>
+                    <ChevronDownIcon
+                      :class="open ? '' : 'text-opacity-70'"
+                      class="w-4 h-4 ml-2 text-gray-500 transition duration-150 ease-in-out group-hover:text-opacity-80"
+                      aria-hidden="true"
+                    />
                   </PopoverButton>
 
                   <transition
@@ -508,107 +410,211 @@ export default {
                     leave-from-class="translate-y-0 opacity-100"
                     leave-to-class="translate-y-1 opacity-0"
                   >
-                    <PopoverPanel class="absolute z-10 w-80 mt-1 transform -translate-x-full left-8 sm:px-0 lg:max-w-3xl">
-                      <div class="bg-white overflow-hidden rounded shadow-lg ring-1 ring-black ring-opacity-5 p-4 space-y-4 flex flex-col">
-                        <div class="h-96 overflow-y-auto">
-                          <div
-                            v-for="reference in db.references"
-                            :key="reference.id"
-                          >
-                            <label class="inline-flex items-center">
-                              <input type="checkbox" class="
-                                  rounded
-                                  border-gray-300
-                                  text-purple-600
-                                  shadow-sm
-                                  focus:border-purple-300
-                                  focus:ring
-                                  focus:ring-offset-0
-                                  focus:ring-purple-200
-                                  focus:ring-opacity-50
-                                " :checked="activeItem.references.includes(reference.id)" @click="toggleReference(reference.id)">
-                              <span class="ml-2 text-sm line-clamp-1">{{ reference.name }}</span>
-                            </label>
-                          </div>
+                    <PopoverPanel class="absolute z-10 w-80 mt-1 transform -translate-x-1/2 left-40 sm:px-0 lg:max-w-3xl">
+                      <div class="bg-white overflow-hidden rounded shadow-lg ring-1 ring-black ring-opacity-5">
+                        <div class="grid grid-cols-9 gap-1 p-4">
+                          <div @click="activeItem.color = swatch" v-for="(swatch, index) in swatches" :key="index" class="rounded cursor-pointer" :class="[activeItem.color === swatch ? 'ring-2 ring-offset-1 ring-black ring-opacity-30' : '', swatch, 'h-6']"></div>
                         </div>
                       </div>
                     </PopoverPanel>
                   </transition>
                 </Popover>
-              </header>
-              <div class="space-y-1">
-                <div
-                  v-for="reference in activeItem.references"
-                  :key="reference"
-                  class="font-bold text-sm"
-                >
-                  {{ getReferenceById(reference).name }}
+              </div>
+              <!-- Score -->
+              <label class="block w-24">
+                <input type="text" class="
+                    block
+                    w-full
+                    rounded-md
+                    border-gray-300
+                    shadow-sm
+                    focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
+                  " placeholder="Score" v-model="activeItem.score">
+              </label>
+            </div>
+
+            <div @click="isAdditionalFieldsVisible = !isAdditionalFieldsVisible" class="bg-gray-100 h-5 rounded cursor-pointer hover:bg-gray-200 flex justify-center items-center">
+              <ChevronDownIcon :class="isAdditionalFieldsVisible ? 'rotate-180' : ''" class="h-4 w-4 text-gray-600"></ChevronDownIcon>
+            </div>
+
+            <div v-if="isAdditionalFieldsVisible" class="space-y-2">
+              <!-- Name -->
+              <div>
+                <label class="block">
+                  <span class="text-gray-700 text-sm">Название</span>
+                  <input type="text" class="
+                      mt-1
+                      block
+                      w-full
+                      rounded-md
+                      border-gray-300
+                      shadow-sm
+                      text-sm
+                      focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
+                    " v-model="activeItem.name">
+                </label>
+              </div>
+              <!-- Group -->
+              <div>
+                <Popover v-slot="{ open }" class="relative">
+                  <PopoverButton
+                    :class="open ? '' : 'text-opacity-90'"
+                    class="w-full inline-flex items-center justify-between shadow px-3 py-3 text-base font-medium text-gray-900 bg-white rounded-md group hover:text-opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75"
+                  >
+                    <div class="flex items-center space-x-2">
+                      <div class="text-sm font-bold">Группа:</div>
+                      <div class="text-sm line-clamp-1" v-if="activeItem.groupId">{{ getGroupById(activeItem.groupId).name }}</div>
+                      <div class="text-sm line-clamp-1" v-else>Не выбрана</div>
+                    </div>
+                    <ChevronDownIcon
+                      :class="open ? '' : 'text-opacity-70'"
+                      class="w-4 h-4 ml-2 text-gray-500 transition duration-150 ease-in-out group-hover:text-opacity-80"
+                      aria-hidden="true"
+                    />
+                  </PopoverButton>
+
+                  <transition
+                    enter-active-class="transition duration-200 ease-out"
+                    enter-from-class="translate-y-1 opacity-0"
+                    enter-to-class="translate-y-0 opacity-100"
+                    leave-active-class="transition duration-150 ease-in"
+                    leave-from-class="translate-y-0 opacity-100"
+                    leave-to-class="translate-y-1 opacity-0"
+                  >
+                    <PopoverPanel class="absolute z-10 w-80 mt-1 transform -translate-x-1/2 left-40 sm:px-0 lg:max-w-3xl">
+                      <div class="bg-white overflow-auto rounded shadow-lg ring-1 ring-black ring-opacity-5 p-2">
+                        <div @click="activeItem.groupId = 0" :class="[0 === activeItem.groupId ? 'font-bold' : '']" class="px-2 py-1 text-sm hover:bg-gray-100 cursor-pointer rounded-lg line-clamp-1">Без группы</div>
+                        <div
+                          v-for="group in db.groups"
+                          :key="group.id"
+                          :class="[group.id === activeItem.groupId ? 'font-bold' : '']"
+                          class="px-2 py-1 text-sm hover:bg-gray-100 cursor-pointer rounded-lg line-clamp-1"
+                          @click="activeItem.groupId = group.id"
+                        >{{ group.name }}</div>
+                      </div>
+                    </PopoverPanel>
+                  </transition>
+                </Popover>
+              </div>
+              <!-- References -->
+              <div class="py-4">
+                <header class="flex items-center">
+                  <div v-if="db.referenceName" class="flex-1 text-xs text-gray-700">{{ db.referenceName }}</div>
+                  <div v-else class="flex-1 text-xs text-gray-700">Связи</div>
+                  <Popover v-slot="{ open }" class="relative">
+                    <PopoverButton
+                      :class="open ? '' : 'opacity-90'"
+                      class="rounded-lg bg-gray-50 h-8 w-8 flex items-center justify-center cursor-pointer text-gray-500 hover:bg-gray-200 hover:text-gray-900"
+                    >
+                      <AdjustmentsIcon class="w-5 h-5" />
+                    </PopoverButton>
+
+                    <transition
+                      enter-active-class="transition duration-200 ease-out"
+                      enter-from-class="translate-y-1 opacity-0"
+                      enter-to-class="translate-y-0 opacity-100"
+                      leave-active-class="transition duration-150 ease-in"
+                      leave-from-class="translate-y-0 opacity-100"
+                      leave-to-class="translate-y-1 opacity-0"
+                    >
+                      <PopoverPanel class="absolute z-10 w-80 mt-1 transform -translate-x-full left-8 sm:px-0 lg:max-w-3xl">
+                        <div class="bg-white overflow-hidden rounded shadow-lg ring-1 ring-black ring-opacity-5 p-4 space-y-4 flex flex-col">
+                          <div class="h-96 overflow-y-auto">
+                            <div
+                              v-for="reference in db.references"
+                              :key="reference.id"
+                            >
+                              <label class="inline-flex items-center">
+                                <input type="checkbox" class="
+                                    rounded
+                                    border-gray-300
+                                    text-purple-600
+                                    shadow-sm
+                                    focus:border-purple-300
+                                    focus:ring
+                                    focus:ring-offset-0
+                                    focus:ring-purple-200
+                                    focus:ring-opacity-50
+                                  " :checked="activeItem.references.includes(reference.id)" @click="toggleReference(reference.id)">
+                                <span class="ml-2 text-sm line-clamp-1">{{ reference.name }}</span>
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      </PopoverPanel>
+                    </transition>
+                  </Popover>
+                </header>
+                <div class="space-y-1">
+                  <div
+                    v-for="reference in activeItem.references"
+                    :key="reference"
+                    class="font-bold text-sm"
+                  >
+                    {{ getReferenceById(reference).name }}
+                  </div>
                 </div>
               </div>
-            </div>
-            <!-- Comments -->
-            <div>
-              <label class="block">
-                <span class="text-gray-700 text-xs">Комментарий</span>
-                <textarea class="
-                    mt-1
-                    block
-                    w-full
-                    rounded-md
-                    border-gray-300
-                    shadow-sm
-                    text-sm
-                    focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
-                  " rows="6" v-model="activeItem.note"></textarea>
-              </label>
-            </div>
-            <!-- Custom fields -->
-            <div
-              v-for="field in activeItem.fields"
-              :key="field.id"
-            >
-              <label class="block">
-                <span class="text-gray-700 text-xs">{{ getFieldById(field.id).name }}</span>
-                <textarea class="
-                    mt-1
-                    block
-                    w-full
-                    rounded-md
-                    border-gray-300
-                    shadow-sm
-                    text-sm
-                    focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
-                  " rows="6" v-model="field.value"></textarea>
-              </label>
-            </div>
-            <div class="py-4">
-              <button @click="deleteItem()" class="cursor-pointer w-full bg-red-100 border border-red-300 text-red-700 font-semibold text-xs py-2 flex justify-center rounded">Удалить</button>
-            </div>
-          </div>
-
-          <hr />
-
-          <div v-if="activeItem.references.length > 0" class="text-xs space-y-2">
-            <header v-if="db.referenceName" class="uppercase font-bold text-gray-500">{{ db.referenceName}}</header>
-            <header v-else class="uppercase font-bold text-gray-500">Связи</header>
-            <div>
-              <span
-                v-for="(reference, index) in activeItem.references"
-                :key="reference"
-              >{{ getReferenceById(reference).name }}<span v-if="index < activeItem.references.length - 1">, </span></span>
-            </div>
-          </div>
-
-          <section
-            v-for="field in activeItem.fields"
-            :key="field.id"
-          >
-            <div v-if="getFieldById(field.id).showInDetals && field.value" class="text-xs space-y-2">
-              <header class="uppercase font-bold text-gray-500">{{ getFieldById(field.id).name }}</header>
-              <div class="atom-prose">
-                <Markdown :source="field.value" />
+              <!-- Comments -->
+              <div>
+                <label class="block">
+                  <span class="text-gray-700 text-xs">Комментарий</span>
+                  <textarea class="
+                      mt-1
+                      block
+                      w-full
+                      rounded-md
+                      border-gray-300
+                      shadow-sm
+                      text-sm
+                      focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
+                    " rows="6" v-model="activeItem.note"></textarea>
+                </label>
+              </div>
+              <!-- Custom fields -->
+              <div
+                v-for="field in activeItem.fields"
+                :key="field.id"
+              >
+                <label class="block">
+                  <span class="text-gray-700 text-xs">{{ getFieldById(field.id).name }}</span>
+                  <textarea class="
+                      mt-1
+                      block
+                      w-full
+                      rounded-md
+                      border-gray-300
+                      shadow-sm
+                      text-sm
+                      focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
+                    " rows="6" v-model="field.value"></textarea>
+                </label>
+              </div>
+              <div class="py-4">
+                <button @click="deleteItem()" class="cursor-pointer w-full bg-red-100 border border-red-300 text-red-700 font-semibold text-xs py-2 flex justify-center rounded">Удалить</button>
               </div>
             </div>
+
+          </section>
+
+          <section :class="[isWideDetails ? 'space-y-12 px-4' : 'space-y-6 px-0']">
+            <div v-if="activeItem.references.length > 0" :class="[isWideDetails ? 'text-base space-y-4' : 'text-xs space-y-2']">
+              <header v-if="db.referenceName" class="uppercase font-bold text-gray-500">{{ db.referenceName}}</header>
+              <header v-else class="uppercase font-bold text-gray-500">Связи</header>
+              <div>
+                <span
+                  v-for="(reference, index) in activeItem.references"
+                  :key="reference"
+                >{{ getReferenceById(reference).name }}<span v-if="index < activeItem.references.length - 1">, </span></span>
+              </div>
+            </div>
+
+            <!-- Custom fields -->
+            <DetailsCustomFields
+              :fields="activeItem.fields"
+              :is-wide="isWideDetails"
+              :get-field-by-id-fn="getFieldById"
+            />
           </section>
 
         </div>
