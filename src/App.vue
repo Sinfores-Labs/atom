@@ -31,7 +31,7 @@ export default {
   components: { FlyOverAbout, FlyOverDescription, FlyOverLayers, FlyOverFilters, FlyOverReferences, FlyOverGroups, FlyOverFields, FlyOverLoad, Grid, DetailsCustomFields, DetailsCustomFieldsEdit, Markdown, XIcon, DuplicateIcon, ChatAltIcon, FireIcon, FilterIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, ChevronUpIcon, ViewBoardsIcon, ViewGridAddIcon, ViewGridIcon, CollectionIcon, Popover, PopoverButton, PopoverPanel, Disclosure, DisclosureButton, DisclosurePanel },
 
   setup() {
-    const actualJSONVersion = 4
+    const actualJSONVersion = 5
     const { showFlyover, hideFlyover, toggleFlyover, about, desc, layers, filters, references, groups, fields, load } = useFlyovers()
 
     const viewBoard = ref(false)
@@ -97,13 +97,19 @@ export default {
       const newAtom = {
         id: lastIndex + 1,
         name: newItem.value,
-        note: "",
-        color: "bg-gray-100",
-        score: 0,
+        layers: [],
         groupId: 0,
         fields,
         references: []
       }
+      db.value.layers.forEach(el => {
+        newAtom.layers.push({
+          id: el.id,
+          note: "",
+          color: "bg-gray-100",
+          score: 0,
+        })
+      })
       db.value.items.push(newAtom)
       newItem.value = ''
       activeItem.value = db.value.items.find(el => el.id === newAtom.id)
@@ -430,6 +436,17 @@ export default {
                   " placeholder="Score" v-model="activeItem.layers.find(el => el.id === activeLayer.id).score">
               </label>
             </div>
+
+            <div>
+                <label class="inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-offset-0 focus:ring-indigo-200 focus:ring-opacity-50"
+                    v-model="activeItem.active"
+                  >
+                  <span class="ml-2">Активно</span>
+                </label>
+              </div>
 
             <div @click="isAdditionalFieldsVisible = !isAdditionalFieldsVisible" class="bg-gray-100 h-5 rounded cursor-pointer hover:bg-gray-200 flex justify-center items-center">
               <ChevronDownIcon :class="isAdditionalFieldsVisible ? 'rotate-180' : ''" class="h-4 w-4 text-gray-600"></ChevronDownIcon>

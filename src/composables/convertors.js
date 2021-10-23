@@ -43,6 +43,14 @@ const convertorToVersion4 = (db) => {
     })
 }
 
+const convertorToVersion5 = (db) => {
+    // Added active property
+    db.value["version"] = 5
+    db.value.items.forEach(item => {
+        item["active"] = true
+    })
+}
+
 const convert = (db, actualVersion) => {
     if (!db.value.hasOwnProperty("version")) {
         convertorToVersion1(db)
@@ -55,6 +63,9 @@ const convert = (db, actualVersion) => {
     }
     if ((db.value.version === 3) && (actualVersion > 3)) {
         convertorToVersion4(db)
+    }
+    if ((db.value.version === 4) && (actualVersion > 4)) {
+        convertorToVersion5(db)
     }
 }
 

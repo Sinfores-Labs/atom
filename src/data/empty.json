@@ -1,5 +1,12 @@
 {
-    "version": 2,
+    "version": 5,
+    "layers":
+    [
+        {
+            "id": 1,
+            "name": "Слой 1"
+        }
+    ],
     "fields":
     [],
     "groups":
@@ -9,9 +16,15 @@
         {
             "id": 1,
             "name": "First Item",
-            "note": "",
-            "color": "bg-gray-100",
-            "score": 0,
+            "layers":
+            [
+                {
+                    "id": 1,
+                    "note": "",
+                    "color": "bg-gray-100",
+                    "score": 0
+                }
+            ],
             "groupId": 0,
             "fields": [],
             "references": []
