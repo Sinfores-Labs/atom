@@ -19,7 +19,7 @@ export default {
       const addNewReference= () => {
         if (newReference.value === '') return
         let lastIndex = 0
-        props.db.value.references.forEach(el => {
+        props.db.references.forEach(el => {
           if (el.id > lastIndex) {
             lastIndex = el.id
           }
@@ -28,7 +28,7 @@ export default {
           id: lastIndex + 1,
           name: newReference.value
         }
-        props.db.value.references.push(_newReference)
+        props.db.references.push(_newReference)
         newReference.value = ''
       }
 

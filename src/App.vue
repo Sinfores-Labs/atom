@@ -111,23 +111,30 @@ export default {
       }
     }
     
+    const selectedReferences = ref([])
+    const filteredResults = computed(() => {
+      if (isLayerReady.value && db.value && db.value.items) {
+        return db.value.items.filter(item => {
+          const intersection = selectedReferences.value.filter(x => item.references.includes(x))
+          return intersection.length > 0
+        })
+      } else {
+        return []
+      }
+    })
     const searchQuery = useDebounceRef('', 400)
     const searchResults = computed(() => {
-        if (isLayerReady.value && db.value && db.value.items) {
-          const q = searchQuery.value.toLowerCase()
-          if (q.length < 3) return db.value.items;
-          return db.value.items.filter(el => {
-            let searchString = `${el.name}`
-            db.value.fields.forEach(field => {
-              if (field.searchable) {
-                searchString += el.fields.find(i => i.id === field.id).value
-              }
-            })
-            return (searchString.toLowerCase().indexOf(q) > -1)
+        const q = searchQuery.value.toLowerCase()
+        if (q.length < 3) return filteredResults.value;
+        return filteredResults.value.filter(el => {
+          let searchString = `${el.name}`
+          db.value.fields.forEach(field => {
+            if (field.searchable) {
+              searchString += el.fields.find(i => i.id === field.id).value
+            }
           })
-        } else {
-          return []
-        }
+          return (searchString.toLowerCase().indexOf(q) > -1)
+        })
     })
 
     const saveJSON = () => {
@@ -168,7 +175,7 @@ export default {
       newItem, addNewItem, deleteItem,
       getGroupById, getFieldById,
       showFlyover, hideFlyover, toggleFlyover, about, desc, filters, references, groups, fields, load,
-      searchQuery, searchResults,
+      searchQuery, searchResults, selectedReferences,
       swatches,
       saveJSON,
       filterByGroup, nonEmptyGroups,
@@ -185,7 +192,7 @@ export default {
     <!-- -------------------------------------------------- -->
     <fly-over-about />
     <fly-over-description v-if="isLayerReady" :db="db" />
-    <fly-over-filters v-if="isLayerReady" />
+    <fly-over-filters v-if="isLayerReady" :db="db" :selected-references="selectedReferences" />
     <fly-over-references v-if="isLayerReady" :db="db" />
     <fly-over-groups v-if="isLayerReady" :db="db" />
     <fly-over-fields v-if="isLayerReady" :db="db" />
