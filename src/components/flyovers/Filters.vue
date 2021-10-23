@@ -13,10 +13,16 @@ export default {
         },
         selectedReferences: {
             type: Object
+        },
+        showWithoutReference: {
+            type: Boolean,
+            default: true,
         }
     },
+    
+    emits: ['toggle-empty'],
 
-    setup(props) {
+    setup(props, { emit }) {
         const { hideFlyover, filters } = useFlyovers()
 
         const loadSelected = () => {
@@ -39,10 +45,13 @@ export default {
             }
         }
 
+         const toggleEmpty = () => { emit('toggle-empty') }
+
         return {
             filters,
             hideFlyover,
-            toggleReference
+            toggleReference,
+            toggleEmpty
         }
     },
 }
@@ -77,20 +86,29 @@ export default {
                     <DisclosurePanel class="text-gray-500 pb-4">
                         <div>
                             <div>
-                                <div
-                                    v-for="reference in db.references"
-                                    :key="reference.id"
-                                >
-                                    <label class="inline-flex items-center">
-                                        <input
-                                            @click="toggleReference(reference.id)"
-                                            type="checkbox"
-                                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-offset-0 focus:ring-indigo-200 focus:ring-opacity-50"
-                                            :checked="selectedReferences.includes(reference.id)"
-                                        >
-                                        <span class="ml-2">{{ reference.name }}</span>
-                                    </label>
-                                </div>
+                                <label class="inline-flex items-center">
+                                    <input
+                                        @click="toggleEmpty()"
+                                        type="checkbox"
+                                        class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-offset-0 focus:ring-indigo-200 focus:ring-opacity-50"
+                                        :checked="showWithoutReference"
+                                    >
+                                    <span class="ml-2">Показывать без связей</span>
+                                </label>
+                            </div>
+                            <div
+                                v-for="reference in db.references"
+                                :key="reference.id"
+                            >
+                                <label class="inline-flex items-center">
+                                    <input
+                                        @click="toggleReference(reference.id)"
+                                        type="checkbox"
+                                        class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-offset-0 focus:ring-indigo-200 focus:ring-opacity-50"
+                                        :checked="selectedReferences.includes(reference.id)"
+                                    >
+                                    <span class="ml-2">{{ reference.name }}</span>
+                                </label>
                             </div>
                         </div>
                     </DisclosurePanel>

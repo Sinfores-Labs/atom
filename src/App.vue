@@ -112,11 +112,14 @@ export default {
     }
     
     const selectedReferences = ref([])
+    const showWithoutReference = ref(true)
+    const toggleShowWithoutReference = () => { showWithoutReference.value = !showWithoutReference.value}
     const filteredResults = computed(() => {
       if (isLayerReady.value && db.value && db.value.items) {
         return db.value.items.filter(item => {
           const intersection = selectedReferences.value.filter(x => item.references.includes(x))
-          return intersection.length > 0
+          const empty = showWithoutReference.value && (item.references.length === 0)
+          return (intersection.length > 0) || empty
         })
       } else {
         return []
@@ -175,7 +178,7 @@ export default {
       newItem, addNewItem, deleteItem,
       getGroupById, getFieldById,
       showFlyover, hideFlyover, toggleFlyover, about, desc, filters, references, groups, fields, load,
-      searchQuery, searchResults, selectedReferences,
+      searchQuery, searchResults, selectedReferences, showWithoutReference, toggleShowWithoutReference,
       swatches,
       saveJSON,
       filterByGroup, nonEmptyGroups,
@@ -192,7 +195,13 @@ export default {
     <!-- -------------------------------------------------- -->
     <fly-over-about />
     <fly-over-description v-if="isLayerReady" :db="db" />
-    <fly-over-filters v-if="isLayerReady" :db="db" :selected-references="selectedReferences" />
+    <fly-over-filters
+      v-if="isLayerReady"
+      :db="db"
+      :selected-references="selectedReferences"
+      :show-without-reference="showWithoutReference"
+      @toggle-empty="toggleShowWithoutReference()"
+    />
     <fly-over-references v-if="isLayerReady" :db="db" />
     <fly-over-groups v-if="isLayerReady" :db="db" />
     <fly-over-fields v-if="isLayerReady" :db="db" />
