@@ -58,7 +58,10 @@ export default {
                 ></textarea>
               </label>
         </div>
-        <p class="text-xs">Атомов: {{ db.items.length }}, связей: {{ db.references.length }}, версия схемы: v.{{ db.version }}</p>
+        <div class="space-y-1">
+          <p class="text-xs">Атомов: {{ db.items.length }} (активных {{ db.items.filter(el => el.active).length }}), связей: {{ db.references.length }}, групп: {{ db.groups.length }}</p>
+          <p class="text-xs">Версия схемы: v.{{ db.version }}</p>
+        </div>
       </div>
     </div>
 </template>

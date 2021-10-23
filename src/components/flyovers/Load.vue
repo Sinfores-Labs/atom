@@ -35,6 +35,7 @@ export default {
                 emit("set-active-item", undefined)
                 emit("set-db", JSON.parse(event.target.result))
                 emit("set-layer-ready", true)
+                hideFlyover("load")
             }
             reader.onerror = error => console.log(error)
             reader.readAsText(sourceJSONFile)
@@ -44,6 +45,7 @@ export default {
             emit("set-db", JSON.parse(JSON.stringify(emptyData)))
             emit("set-layer-ready", true)
             emit("set-active-item", undefined)
+            hideFlyover("load")
         }
 
         const onDrop = (acceptFiles, rejectReasons) => { sourceJSONFile = acceptFiles[0]; loadJSON() }

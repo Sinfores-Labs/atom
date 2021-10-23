@@ -45,7 +45,7 @@ export default {
     <div
         @click="setActiveItem()"
         :class="[(activeItem && activeItem.id === item.id) ? 'ring-2 ring-offset-1 ring-purple-500 ring-opacity-40 bg-purple-50' : '', item.active ? 'opacity-100' : 'opacity-20']"
-        class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded p-2"
+        class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded p-2 select-none"
     >
         <div
             class="h-12 w-12 rounded border flex items-center px-2"

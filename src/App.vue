@@ -4,10 +4,8 @@ import { XIcon, DuplicateIcon, ChatAltIcon, FireIcon, FilterIcon, StatusOnlineIc
 
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
-import { saveAs } from 'file-saver'
 import Markdown from 'vue3-markdown-it'
 
-import { useFlyovers } from '/src/composables/flyovers'
 import { useDebounceRef } from "/src/composables/debounce"
 import { useConvertors } from '/src/composables/convertors'
 import { useActiveLayer } from '/src/composables/activeLayer'
@@ -17,6 +15,7 @@ import { useHeatmap } from '/src/composables/heatmap'
 import { swatches } from '/src/data/swatches'
 
 import Grid from '/src/components/Grid.vue'
+import Footer from '/src/components/Footer.vue'
 import DetailsCustomFields from '/src/components/DetailsCustomFields.vue'
 import DetailsCustomFieldsEdit from '/src/components/DetailsCustomFieldsEdit.vue'
 
@@ -30,11 +29,10 @@ import FlyOverFields from '/src/components/flyovers/Fields.vue'
 import FlyOverLoad from '/src/components/flyovers/Load.vue'
 
 export default {
-  components: { FlyOverAbout, FlyOverDescription, FlyOverLayers, FlyOverFilters, FlyOverReferences, FlyOverGroups, FlyOverFields, FlyOverLoad, Grid, DetailsCustomFields, DetailsCustomFieldsEdit, Markdown, XIcon, DuplicateIcon, ChatAltIcon, FireIcon, FilterIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, ChevronUpIcon, ViewBoardsIcon, ViewGridAddIcon, ViewGridIcon, CollectionIcon, Popover, PopoverButton, PopoverPanel, Disclosure, DisclosureButton, DisclosurePanel },
+  components: { FlyOverAbout, FlyOverDescription, FlyOverLayers, FlyOverFilters, FlyOverReferences, FlyOverGroups, FlyOverFields, FlyOverLoad, Grid, Footer, DetailsCustomFields, DetailsCustomFieldsEdit, Markdown, XIcon, DuplicateIcon, ChatAltIcon, FireIcon, FilterIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, ChevronUpIcon, ViewBoardsIcon, ViewGridAddIcon, ViewGridIcon, CollectionIcon, Popover, PopoverButton, PopoverPanel, Disclosure, DisclosureButton, DisclosurePanel },
 
   setup() {
     const actualJSONVersion = 5
-    const { showFlyover, hideFlyover, toggleFlyover, about, desc, layers, filters, references, groups, fields, load } = useFlyovers()
 
     const { board, toggleBoard } = useBoard()
     const { popper, togglePopper } = usePopper()
@@ -156,14 +154,6 @@ export default {
         })
     })
 
-    const saveJSON = () => {
-      // https://stackoverflow.com/questions/679915/how-do-i-test-for-an-empty-javascript-object
-      if (db && Object.keys(db.value).length !== 0) {
-        let blob = new Blob([JSON.stringify(db.value)], {type: "application/json;charset=utf-8"});
-        saveAs(blob, "atoms.json");
-      }
-    };
-
     const filterByGroup = (id) => {
       return searchResults.value.filter(el => el.groupId === parseInt(id))
     }
@@ -195,10 +185,8 @@ export default {
       activeItem, setActiveItem, isAdditionalFieldsVisible, isWideDetails,
       newItem, addNewItem, deleteItem,
       getGroupById, getFieldById,
-      showFlyover, hideFlyover, toggleFlyover, about, desc, layers, filters, references, groups, fields, load,
       searchQuery, searchResults, selectedReferences, showWithoutReference, toggleShowWithoutReference,
       swatches,
-      saveJSON,
       filterByGroup, nonEmptyGroups,
       toggleReference, getReferenceById
     }
@@ -636,57 +624,7 @@ export default {
 
     <!-- Footer -->
     <!-- -------------------------------------------------- -->
-    <div class="z-50 h-10 bg-gray-50 border-t flex items-center justify-between text-xs px-4">
-      <div @click="toggleFlyover('about')" class="cursor-pointer select-none"><span class="font-bold">ATOM</span> &middot; Sinfores SX</div>
-
-      <!-- Main menu -->
-      <!-- -------------------------------------------------- -->
-      <div class="flex items-center space-x-2 border-b-2 border-transparent">
-        <!-- Description -->
-        <div @click="toggleFlyover('desc')" v-if="isLayerReady" :class="[desc ? 'border-purple-500' : 'border-transparent']" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer select-none font-semibold flex items-center space-x-2" type="button">
-          <StatusOnlineIcon class="w-5 h-5" aria-hidden="true" />
-          <div>Описание</div>
-        </div>
-        <!-- Layers -->
-        <div @click="toggleFlyover('layers')" v-if="isLayerReady" :class="[layers ? 'border-purple-500' : 'border-transparent']" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer select-none font-semibold flex items-center space-x-2" type="button">
-          <CollectionIcon class="w-5 h-5" aria-hidden="true" />
-          <div>Слои</div>
-        </div>
-        <!-- Filters -->
-        <div @click="toggleFlyover('filters')" v-if="isLayerReady" :class="[filters ? 'border-purple-500' : 'border-transparent']" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer select-none font-semibold flex items-center space-x-2" type="button">
-          <FilterIcon class="w-5 h-5" aria-hidden="true" />
-          <div>Фильтры</div>
-        </div>
-        <!-- References -->
-        <div @click="toggleFlyover('references')" v-if="isLayerReady" :class="[references ? 'border-purple-500' : 'border-transparent']" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer select-none font-semibold flex items-center space-x-2" type="button">
-          <LinkIcon class="w-5 h-5" aria-hidden="true" />
-          <div v-if="db.referenceName">{{ db.referenceName }}</div>
-          <div v-else>Связи</div>
-        </div>
-        <!-- Groups -->
-        <div @click="toggleFlyover('groups')" v-if="isLayerReady" :class="[groups ? 'border-purple-500' : 'border-transparent']" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer select-none font-semibold flex items-center space-x-2" type="button">
-          <ViewGridAddIcon class="w-5 h-5" aria-hidden="true" />
-          <div>Группы</div>
-        </div>
-        <!-- Fields -->
-        <div @click="toggleFlyover('fields')" v-if="isLayerReady" :class="[fields ? 'border-purple-500' : 'border-transparent']" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer select-none font-semibold flex items-center space-x-2" type="button">
-          <DuplicateIcon class="w-5 h-5" aria-hidden="true" />
-          <div>Поля</div>
-        </div>
-        <!-- Load -->
-        <div @click="toggleFlyover('load')" :class="[load ? 'border-purple-500' : 'border-transparent']" class="border-t-2 h-10 px-4 hover:bg-gray-200 cursor-pointer select-none font-semibold flex items-center space-x-2 select-none" type="button">
-          <UploadIcon class="w-5 h-5" aria-hidden="true" />
-          <div>Загрузить</div>
-        </div>
-        <!-- Save -->
-        <div @click="saveJSON()" v-if="isLayerReady" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer select-none font-semibold flex items-center space-x-2" type="button">
-          <DownloadIcon class="w-5 h-5" aria-hidden="true" />
-          <div>Сохранить</div>
-        </div>
-      </div>
-      <!-- -------------------------------------------------- -->
-
-    </div>
+    <Footer :db="db" :is-layer-ready="isLayerReady" />
     <!-- -------------------------------------------------- -->
   </div>
 </template>

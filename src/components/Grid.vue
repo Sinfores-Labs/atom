@@ -71,7 +71,6 @@ export default {
                 <template #content>
                 <div class="space-y-2">
                     <div class="font-bold">{{ item.name }}</div>
-                    <div>Оценка: {{ item.score }}</div>
                     <div v-if="item.note">{{ item.note }}</div>
                 </div>
                 </template>
