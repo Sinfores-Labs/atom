@@ -2,6 +2,7 @@
 import { XIcon } from '@heroicons/vue/outline'
 import { useDropzone } from 'vue3-dropzone'
 import { useConvertors } from '/src/composables/convertors'
+import { useFlyovers } from '/src/composables/flyovers'
 
 import emptyData from '/src/data/empty.json'
 
@@ -9,16 +10,6 @@ export default {
     components: { XIcon },
 
     props: {
-        visible: {
-            type: Boolean,
-            default: false
-        },
-        hideFn: {
-            type: Function
-        },
-        isLayerReady: {
-            type: Boolean
-        },
         activeItem: {
             type: Object
         },
@@ -33,6 +24,7 @@ export default {
     emits: ['set-db', 'set-layer-ready', 'set-active-item'],
 
     setup(props, { emit }) {
+        const { hideFlyover, load } = useFlyovers()
         let sourceJSONFile = undefined
         const { convert } = useConvertors()
 
@@ -62,18 +54,20 @@ export default {
             getRootProps,
             getInputProps,
             ...rest,
-            loadDefault
+            loadDefault,
+            hideFlyover,
+            load
         }
     },
 }
 </script>
 
 <template>
-    <div :class="visible ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-4 w-96 h-96 overflow-hidden flex flex-col border shadow-xl border-t-2 border-t-purple-500">
+    <div :class="load ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-4 w-96 h-96 overflow-hidden flex flex-col border shadow-xl border-t-2 border-t-purple-500">
       <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
         <div class="flex-1 font-bold">Загрузка файла</div>
         <div>
-          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFn('load')">
+          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFlyover('load')">
             <XIcon class="h-4 w-4 text-gray-400"/>
           </div>
         </div>

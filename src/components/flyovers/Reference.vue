@@ -2,28 +2,19 @@
 import { ref } from 'vue'
 import { XIcon, PlusSmIcon } from '@heroicons/vue/outline'
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
+import { useFlyovers } from '/src/composables/flyovers'
 
 export default {
     components: { XIcon, PlusSmIcon, Popover, PopoverButton, PopoverPanel },
 
     props: {
-        visible: {
-            type: Boolean,
-            default: false
-        },
-        hideFn: {
-            type: Function
-        },
-        isLayerReady: {
-            type: Boolean,
-            default: false
-        },
         db: {
             type: Object
         }
     },
 
     setup(props) {
+      const { hideFlyover, references } = useFlyovers()
       const newReference = ref('')
       const addNewReference= () => {
         if (newReference.value === '') return
@@ -43,18 +34,20 @@ export default {
 
       return {
         newReference,
-        addNewReference
+        addNewReference,
+        hideFlyover,
+        references
       }
     },
 }
 </script>
 
 <template>
-    <div v-if="isLayerReady" :class="visible ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-80 w-96 h-large overflow-hidden flex flex-col border shadow-xl border-t-2 border-t-purple-500">
+    <div :class="references ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-80 w-96 h-large overflow-hidden flex flex-col border shadow-xl border-t-2 border-t-purple-500">
       <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
         <div class="flex-1 font-bold">Управление связями</div>
         <div>
-          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFn('references')">
+          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFlyover('references')">
             <XIcon class="h-4 w-4 text-gray-400"/>
           </div>
         </div>

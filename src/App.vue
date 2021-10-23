@@ -1,6 +1,6 @@
 <script>
 import { ref, computed } from 'vue'
-import { XIcon, ChatAltIcon, FireIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, CollectionIcon, ChevronUpIcon, ViewGridAddIcon, ViewGridIcon, ViewBoardsIcon } from '@heroicons/vue/outline'
+import { XIcon, ChatAltIcon, FireIcon, FilterIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, CollectionIcon, ChevronUpIcon, ViewGridAddIcon, ViewGridIcon, ViewBoardsIcon } from '@heroicons/vue/outline'
 
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
@@ -18,17 +18,18 @@ import DetailsCustomFieldsEdit from '/src/components/DetailsCustomFieldsEdit.vue
 
 import FlyOverAbout from '/src/components/flyovers/About.vue'
 import FlyOverDescription from '/src/components/flyovers/Description.vue'
+import FlyOverFilters from '/src/components/flyovers/Filters.vue'
 import FlyOverReferences from '/src/components/flyovers/Reference.vue'
 import FlyOverGroups from '/src/components/flyovers/Groups.vue'
 import FlyOverFields from '/src/components/flyovers/Fields.vue'
 import FlyOverLoad from '/src/components/flyovers/Load.vue'
 
 export default {
-  components: { FlyOverAbout, FlyOverDescription, FlyOverReferences, FlyOverGroups, FlyOverFields, FlyOverLoad, Grid, DetailsCustomFields, DetailsCustomFieldsEdit, Markdown, XIcon, ChatAltIcon, FireIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, ChevronUpIcon, ViewBoardsIcon, ViewGridAddIcon, ViewGridIcon, CollectionIcon, Popover, PopoverButton, PopoverPanel, Disclosure, DisclosureButton, DisclosurePanel },
+  components: { FlyOverAbout, FlyOverDescription, FlyOverFilters, FlyOverReferences, FlyOverGroups, FlyOverFields, FlyOverLoad, Grid, DetailsCustomFields, DetailsCustomFieldsEdit, Markdown, XIcon, ChatAltIcon, FireIcon, FilterIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, ChevronUpIcon, ViewBoardsIcon, ViewGridAddIcon, ViewGridIcon, CollectionIcon, Popover, PopoverButton, PopoverPanel, Disclosure, DisclosureButton, DisclosurePanel },
 
   setup() {
     const actualJSONVersion = 3
-    const { showFlyover, hideFlyover, toggleFlyover, about, desc, references, groups, fields, load } = useFlyovers()
+    const { showFlyover, hideFlyover, toggleFlyover, about, desc, filters, references, groups, fields, load } = useFlyovers()
 
     const viewBoard = ref(false)
     const poppers = ref(false)
@@ -166,7 +167,7 @@ export default {
       activeItem, setActiveItem, isAdditionalFieldsVisible, isWideDetails,
       newItem, addNewItem, deleteItem,
       getGroupById, getFieldById,
-      showFlyover, hideFlyover, toggleFlyover, about, desc, references, groups, fields, load,
+      showFlyover, hideFlyover, toggleFlyover, about, desc, filters, references, groups, fields, load,
       searchQuery, searchResults,
       swatches,
       saveJSON,
@@ -182,38 +183,13 @@ export default {
 
     <!-- Flyovers -->
     <!-- -------------------------------------------------- -->
-    <fly-over-about
-      :visible="about"
-      :hideFn="hideFlyover"
-    />
-    <fly-over-description
-      :visible="desc"
-      :hideFn="hideFlyover"
-      :is-layer-ready="isLayerReady"
-      :db="db"
-    />
-    <fly-over-references
-      :visible="references"
-      :hideFn="hideFlyover"
-      :is-layer-ready="isLayerReady"
-      :db="db"
-    />
-    <fly-over-groups
-      :visible="groups"
-      :hideFn="hideFlyover"
-      :is-layer-ready="isLayerReady"
-      :db="db"
-    />
-    <fly-over-fields
-      :visible="fields"
-      :hideFn="hideFlyover"
-      :is-layer-ready="isLayerReady"
-      :db="db"
-    />
+    <fly-over-about />
+    <fly-over-description v-if="isLayerReady" :db="db" />
+    <fly-over-filters v-if="isLayerReady" />
+    <fly-over-references v-if="isLayerReady" :db="db" />
+    <fly-over-groups v-if="isLayerReady" :db="db" />
+    <fly-over-fields v-if="isLayerReady" :db="db" />
     <fly-over-load
-      :visible="load"
-      :hideFn="hideFlyover"
-      :is-layer-ready="isLayerReady"
       :db="db"
       :active-item="activeItem"
       :version="actualJSONVersion"
@@ -571,29 +547,13 @@ export default {
                     " rows="6" v-model="activeItem.note"></textarea>
                 </label>
               </div>
+
               <!-- Custom fields -->
               <DetailsCustomFieldsEdit
                 :fields="activeItem.fields"
                 :get-field-by-id-fn="getFieldById"
               />
-              <!-- <div
-                v-for="field in activeItem.fields"
-                :key="field.id"
-              >
-                <label class="block">
-                  <span class="text-gray-700 text-xs">{{ getFieldById(field.id).name }}</span>
-                  <textarea class="
-                      mt-1
-                      block
-                      w-full
-                      rounded-md
-                      border-gray-300
-                      shadow-sm
-                      text-sm
-                      focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
-                    " rows="6" v-model="field.value"></textarea>
-                </label>
-              </div> -->
+
               <div class="py-4">
                 <button @click="deleteItem()" class="cursor-pointer w-full bg-red-50 border border-red-100 text-red-700 font-semibold text-xs py-2 flex justify-center rounded">Удалить</button>
               </div>
@@ -643,33 +603,38 @@ export default {
       <!-- -------------------------------------------------- -->
       <div class="flex items-center space-x-2 border-b-2 border-transparent">
         <!-- Description -->
-        <div @click="toggleFlyover('desc')" v-if="isLayerReady" :class="[desc ? 'border-purple-500' : 'border-transparent']" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
+        <div @click="toggleFlyover('desc')" v-if="isLayerReady" :class="[desc ? 'border-purple-500' : 'border-transparent']" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer select-none font-semibold flex items-center space-x-2" type="button">
           <StatusOnlineIcon class="w-5 h-5" aria-hidden="true" />
           <div>Описание</div>
         </div>
+        <!-- Filters -->
+        <div @click="toggleFlyover('filters')" v-if="isLayerReady" :class="[filters ? 'border-purple-500' : 'border-transparent']" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer select-none font-semibold flex items-center space-x-2" type="button">
+          <FilterIcon class="w-5 h-5" aria-hidden="true" />
+          <div>Фильтры</div>
+        </div>
         <!-- References -->
-        <div @click="toggleFlyover('references')" v-if="isLayerReady" :class="[references ? 'border-purple-500' : 'border-transparent']" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
+        <div @click="toggleFlyover('references')" v-if="isLayerReady" :class="[references ? 'border-purple-500' : 'border-transparent']" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer select-none font-semibold flex items-center space-x-2" type="button">
           <LinkIcon class="w-5 h-5" aria-hidden="true" />
           <div v-if="db.referenceName">{{ db.referenceName }}</div>
           <div v-else>Связи</div>
         </div>
         <!-- Groups -->
-        <div @click="toggleFlyover('groups')" v-if="isLayerReady" :class="[groups ? 'border-purple-500' : 'border-transparent']" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
+        <div @click="toggleFlyover('groups')" v-if="isLayerReady" :class="[groups ? 'border-purple-500' : 'border-transparent']" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer select-none font-semibold flex items-center space-x-2" type="button">
           <ViewGridAddIcon class="w-5 h-5" aria-hidden="true" />
           <div>Группы</div>
         </div>
         <!-- Fields -->
-        <div @click="toggleFlyover('fields')" v-if="isLayerReady" :class="[fields ? 'border-purple-500' : 'border-transparent']" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
+        <div @click="toggleFlyover('fields')" v-if="isLayerReady" :class="[fields ? 'border-purple-500' : 'border-transparent']" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer select-none font-semibold flex items-center space-x-2" type="button">
           <CollectionIcon class="w-5 h-5" aria-hidden="true" />
           <div>Поля</div>
         </div>
         <!-- Load -->
-        <div @click="toggleFlyover('load')" :class="[load ? 'border-purple-500' : 'border-transparent']" class="border-t-2 h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2 select-none" type="button">
+        <div @click="toggleFlyover('load')" :class="[load ? 'border-purple-500' : 'border-transparent']" class="border-t-2 h-10 px-4 hover:bg-gray-200 cursor-pointer select-none font-semibold flex items-center space-x-2 select-none" type="button">
           <UploadIcon class="w-5 h-5" aria-hidden="true" />
           <div>Загрузить</div>
         </div>
         <!-- Save -->
-        <div @click="saveJSON()" v-if="isLayerReady" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer font-semibold flex items-center space-x-2" type="button">
+        <div @click="saveJSON()" v-if="isLayerReady" class="border-t-2 border-transparent h-10 px-4 hover:bg-gray-200 cursor-pointer select-none font-semibold flex items-center space-x-2" type="button">
           <DownloadIcon class="w-5 h-5" aria-hidden="true" />
           <div>Сохранить</div>
         </div>

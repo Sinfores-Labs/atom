@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { XIcon, PlusSmIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/vue/outline'
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
+import { useFlyovers } from '/src/composables/flyovers'
 
 const fieldTypes = [
   {
@@ -19,23 +20,14 @@ export default {
     components: { XIcon, PlusSmIcon, ChevronUpIcon, ChevronDownIcon, Popover, PopoverButton, PopoverPanel, Disclosure, DisclosureButton, DisclosurePanel },
 
     props: {
-        visible: {
-            type: Boolean,
-            default: false
-        },
-        hideFn: {
-            type: Function
-        },
-        isLayerReady: {
-            type: Boolean,
-            default: false
-        },
         db: {
             type: Object
         }
     },
 
     setup(props) {
+        const { hideFlyover, fields } = useFlyovers()
+
         const newField = ref('')
         
         const add = () => {
@@ -86,7 +78,9 @@ export default {
             newField,
             add,
             remove,
-            fieldTypes
+            fieldTypes,
+            hideFlyover,
+            fields
         }
         
     },
@@ -94,12 +88,12 @@ export default {
 </script>
 
 <template>
-    <div v-if="isLayerReady" :class="visible ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-32 w-96 h-large overflow-hidden flex flex-col border shadow-xl border-t-2 border-t-purple-500">
+    <div :class="fields ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-32 w-96 h-large overflow-hidden flex flex-col border shadow-xl border-t-2 border-t-purple-500">
       <!-- Header -->
       <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
         <div class="flex-1 font-bold">Управление полями</div>
         <div>
-          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFn('fields')">
+          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFlyover('fields')">
             <XIcon class="h-4 w-4 text-gray-400"/>
           </div>
         </div>

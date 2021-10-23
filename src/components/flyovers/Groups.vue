@@ -2,28 +2,20 @@
 import { ref } from 'vue'
 import { XIcon, PlusSmIcon } from '@heroicons/vue/outline'
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
+import { useFlyovers } from '/src/composables/flyovers'
 
 export default {
     components: { XIcon, PlusSmIcon, Popover, PopoverButton, PopoverPanel },
 
     props: {
-        visible: {
-            type: Boolean,
-            default: false
-        },
-        hideFn: {
-            type: Function
-        },
-        isLayerReady: {
-            type: Boolean,
-            default: false
-        },
         db: {
             type: Object
         }
     },
 
     setup(props) {
+        const { hideFlyover, groups } = useFlyovers()
+
         const newGroup = ref('')
         const addNewGroup= () => {
         if (newGroup.value === '') return
@@ -43,18 +35,20 @@ export default {
 
         return {
             newGroup,
-            addNewGroup
+            addNewGroup,
+            hideFlyover,
+            groups
         }
     },
 }
 </script>
 
 <template>
-    <div v-if="isLayerReady" :class="visible ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-32 w-96 h-large overflow-hidden flex flex-col border shadow-xl border-t-2 border-t-purple-500">
+    <div :class="groups ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-32 w-96 h-large overflow-hidden flex flex-col border shadow-xl border-t-2 border-t-purple-500">
       <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
         <div class="flex-1 font-bold">Управление группами</div>
         <div>
-          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFn('groups')">
+          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFlyover('groups')">
             <XIcon class="h-4 w-4 text-gray-400"/>
           </div>
         </div>

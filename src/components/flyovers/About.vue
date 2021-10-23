@@ -1,29 +1,26 @@
 <script>
 import { XIcon } from '@heroicons/vue/outline'
+import { useFlyovers } from '/src/composables/flyovers'
 
 export default {
     components: { XIcon },
-    
-    props: {
-        visible: {
-            type: Boolean,
-            default: false
-        },
-        hideFn: {
-            type: Function
-        }
-    },
 
-    setup() {},
+    setup() {
+      const { hideFlyover, about } = useFlyovers()
+      return {
+        hideFlyover,
+        about
+      }
+    },
 }
 </script>
 
 <template>
-    <div :class="visible ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 left-2 w-96 h-large overflow-hidden flex flex-col border shadow-xl border-t-2 border-t-purple-500">
+    <div :class="about ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 left-2 w-96 h-large overflow-hidden flex flex-col border shadow-xl border-t-2 border-t-purple-500">
       <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
         <div class="flex-1 font-bold">ATOM</div>
         <div>
-          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFn('about')">
+          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFlyover('about')">
             <XIcon class="h-4 w-4 text-gray-400"/>
           </div>
         </div>
