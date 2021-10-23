@@ -618,8 +618,9 @@ export default {
           </section>
 
         </div>
+
         <div v-else>
-          <div v-if="isLayerReady" class="space-y-2 p-8">
+          <div v-if="isLayerReady" class="space-y-2 px-2 py-16">
             <div class="font-bold">{{ db.model.name }}</div>
             <div class="text-sm text-gray-600">{{ db.model.description }}</div>
             <div v-if="db.model.version" class="text-xs text-gray-600 font-bold">Версия: {{ db.model.version }}</div>
