@@ -15,4 +15,5 @@
 
 - [Build Vue 3 Desktop Apps in Just 5 Minutes – Vite + Electron Quick Start Guide](https://learnvue.co/2021/05/build-vue-3-desktop-apps-in-just-5-minutes-vite-electron-quick-start-guide/)
 - [Quick Start Electron](https://www.electronjs.org/docs/latest/tutorial/quick-start#create-the-main-script-file)
+- [Vite + Vue 3 + electron + TypeScript](https://dev.to/brojenuel/vite-vue-3-electron-5h4o) (baseDir information)
 - [Updating Applications](https://www.electronjs.org/docs/latest/tutorial/updates)

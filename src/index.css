@@ -54,3 +54,7 @@ ul {
 .flip-list-move {
   transition: transform 0.3s;
 }
+
+.atom-prose p {
+  @apply py-1;
+}

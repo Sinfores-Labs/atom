@@ -1,34 +1,49 @@
 <script>
 import { ref, computed } from 'vue'
-import { XIcon, FireIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, CollectionIcon, ChevronUpIcon, ViewGridAddIcon, ViewGridIcon, ViewBoardsIcon } from '@heroicons/vue/outline'
+import { XIcon, ChatAltIcon, FireIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, CollectionIcon, ChevronUpIcon, ViewGridAddIcon, ViewGridIcon, ViewBoardsIcon } from '@heroicons/vue/outline'
+
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
 import { saveAs } from 'file-saver'
 import Markdown from 'vue3-markdown-it'
-import Popper from "vue3-popper"
-import { useDropzone } from 'vue3-dropzone'
 
 import { useFlyovers } from '/src/composables/flyovers'
-import { useDebounceRef } from "/src/composables/debounce";
+import { useDebounceRef } from "/src/composables/debounce"
+import { useConvertors } from '/src/composables/convertors'
 import { swatches } from '/src/data/swatches'
 
-import emptyData from '/src/data/empty.json'
+import Grid from '/src/components/Grid.vue'
+
+import FlyOverAbout from '/src/components/flyovers/About.vue'
+import FlyOverDescription from '/src/components/flyovers/Description.vue'
+import FlyOverReferences from '/src/components/flyovers/Reference.vue'
+import FlyOverGroups from '/src/components/flyovers/Groups.vue'
+import FlyOverFields from '/src/components/flyovers/Fields.vue'
+import FlyOverLoad from '/src/components/flyovers/Load.vue'
 
 export default {
-  components: { Popper, Markdown, XIcon, FireIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, ChevronUpIcon, ViewBoardsIcon, ViewGridAddIcon, ViewGridIcon, CollectionIcon, Popover, PopoverButton, PopoverPanel, Disclosure, DisclosureButton, DisclosurePanel },
+  components: { FlyOverAbout, FlyOverDescription, FlyOverReferences, FlyOverGroups, FlyOverFields, FlyOverLoad, Grid, Markdown, XIcon, ChatAltIcon, FireIcon, StatusOnlineIcon, AdjustmentsIcon, LinkIcon, UploadIcon, DownloadIcon, PlusSmIcon, ChevronDownIcon, ChevronUpIcon, ViewBoardsIcon, ViewGridAddIcon, ViewGridIcon, CollectionIcon, Popover, PopoverButton, PopoverPanel, Disclosure, DisclosureButton, DisclosurePanel },
 
   setup() {
+    const actualJSONVersion = 2
+    const { showFlyover, hideFlyover, toggleFlyover, about, desc, references, groups, fields, load } = useFlyovers()
+
     const viewBoard = ref(false)
+    const poppers = ref(false)
     const heatmap = ref(false)
 
     const db = ref(undefined)
+    const { convert } = useConvertors()
+    const setDB = (value) => { db.value = value; convert(db, actualJSONVersion) }
+
     const isLayerReady = ref(false)
-    const { showFlyover, hideFlyover, toggleFlyover, about, desc, references, groups, fields, load } = useFlyovers()
+    const setLayerReady = (value) => { isLayerReady.value = value }
+    
 
     const activeItem = ref(undefined)
-    const setActiveItem = (id) => {
+    const setActiveItem = (value) => {
       if (db.value && db.value.items) {
-        activeItem.value = db.value.items.find(el => el.id === parseInt(id))
+        activeItem.value = db.value.items.find(el => el.id === parseInt(value))
       } else {
         return undefined
       }
@@ -91,68 +106,6 @@ export default {
         }
       }
     }
-
-    const newField = ref('')
-    const addNewField = () => {
-      if (newField.value === '') return
-      let lastIndex = 0
-      db.value.fields.forEach(el => {
-        if (el.id > lastIndex) {
-          lastIndex = el.id
-        }
-      })
-      const _newField = {
-        id: lastIndex + 1,
-        name: newField.value,
-        showInDetals: false,
-        showInPopper: false,
-        showInGrid: false,
-        searchable: false,
-        filterable: false
-      }
-      db.value.fields.push(_newField)
-      db.value.items.forEach(el => {
-        el.fields.push({
-          id: lastIndex + 1,
-          value: ''
-        })
-      })
-      newField.value = ''
-    }
-
-    const newGroup = ref('')
-    const addNewGroup= () => {
-      if (newGroup.value === '') return
-      let lastIndex = 0
-      db.value.groups.forEach(el => {
-        if (el.id > lastIndex) {
-          lastIndex = el.id
-        }
-      })
-      const _newGroup = {
-        id: lastIndex + 1,
-        name: newGroup.value
-      }
-      db.value.groups.push(_newGroup)
-      newGroup.value = ''
-    }
-
-    const newReference = ref('')
-    const addNewReference= () => {
-      if (newReference.value === '') return
-      let lastIndex = 0
-      db.value.references.forEach(el => {
-        if (el.id > lastIndex) {
-          lastIndex = el.id
-        }
-      })
-      const _newReference = {
-        id: lastIndex + 1,
-        name: newReference.value
-      }
-      db.value.references.push(_newReference)
-      newReference.value = ''
-    }
     
     const searchQuery = useDebounceRef('', 400)
     const searchResults = computed(() => {
@@ -173,25 +126,6 @@ export default {
         }
     })
 
-    let sourceJSONFile = undefined
-    const loadJSON = () => {
-      let reader = new FileReader()
-      reader.onload = event => {
-        isLayerReady.value = false
-        activeItem.value = undefined
-        db.value = JSON.parse(event.target.result)
-        isLayerReady.value = true
-      }
-      reader.onerror = error => console.log(error)
-      reader.readAsText(sourceJSONFile)
-    }
-    const loadDefault = () => {
-      db.value = JSON.parse(JSON.stringify(emptyData))
-      isLayerReady.value = true
-      activeItem.value = undefined
-    }
-    const onDrop = (acceptFiles, rejectReasons) => { sourceJSONFile = acceptFiles[0]; loadJSON() }
-    const { getRootProps, getInputProps, ...rest } = useDropzone({ onDrop })
     const saveJSON = () => {
       // https://stackoverflow.com/questions/679915/how-do-i-test-for-an-empty-javascript-object
       if (db && Object.keys(db.value).length !== 0) {
@@ -222,19 +156,17 @@ export default {
     }
 
     return {
-      viewBoard, heatmap,
-      db,
-      isLayerReady,
+      actualJSONVersion,
+      viewBoard, poppers, heatmap,
+      db, setDB,
+      isLayerReady, setLayerReady,
       activeItem, setActiveItem, isAdditionalFieldsVisible,
       newItem, addNewItem, deleteItem,
-      newField, addNewField,
-      newGroup, addNewGroup,
-      newReference, addNewReference,
       getGroupById, getFieldById,
       showFlyover, hideFlyover, toggleFlyover, about, desc, references, groups, fields, load,
       searchQuery, searchResults,
       swatches,
-      getRootProps, getInputProps, ...rest, saveJSON, loadDefault,
+      saveJSON,
       filterByGroup, nonEmptyGroups,
       toggleReference, getReferenceById
     }
@@ -247,383 +179,45 @@ export default {
 
     <!-- Flyovers -->
     <!-- -------------------------------------------------- -->
-
-    <!-- Flyover: About -->
-    <div :class="about ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 left-2 w-96 h-large overflow-hidden flex flex-col border shadow-xl border-t-2 border-t-purple-500">
-      <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
-        <div class="flex-1 font-bold">ATOM</div>
-        <div>
-          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFlyover('about')">
-            <XIcon class="h-4 w-4 text-gray-400"/>
-          </div>
-        </div>
-      </div>
-      <div class="flex-1 bg-white overflow-auto px-4 space-y-4 text-sm">
-        <p class="text-xs">Полезная штука, чтобы осуществлять декомпозицию сложных процессов, структурировано хранить информацию и т.д.</p>
-        <p class="text-xs">Реализовано в рамках инициативы Security Expirience (SX) компании Sinfores Group. Инициатива направлена на облегчение труда рядовых специалистов по кибербезопасности. В рамках инициативы мы открываем доступ к своим инструментам, которые используются в проектной работе.</p>
-        <div class="bg-red-100 p-4 rounded border border-red-200 text-red-900 space-y-2 text-xs">
-          <header class="font-bold uppercase">Важно</header>
-          <p>Вся работа с данными осуществляется исключительно на Вашем компьютере. Они никуда не передаются и даже никакие cookies-файлы не используются. Поэтому не забывайте периодически сохранять Ваши модели, так как мы их восстановить не сможем.</p>
-        </div>
-      </div>
-    </div>
-    <!-- -------------------------------------------------- -->
-
-    <!-- Flyover: Description -->
-    <div v-if="isLayerReady" :class="desc ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-108 w-96 h-96 overflow-hidden flex flex-col border shadow-xl border-t-2 border-t-purple-500">
-      <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
-        <div class="flex-1 font-bold">Описание</div>
-        <div>
-          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFlyover('desc')">
-            <XIcon class="h-4 w-4 text-gray-400"/>
-          </div>
-        </div>
-      </div>
-      <div class="flex-1 bg-white overflow-auto px-4 space-y-4 text-sm">
-        <div class="space-y-2">
-          <label class="block">
-            <span class="text-gray-700">Название</span>
-            <input
-              v-model="db.model.name"
-              type="text"
-              class="text-sm mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              placeholder="Название">
-          </label>
-          <label class="block">
-            <span class="text-gray-700">Версия</span>
-            <input
-              v-model="db.model.version"
-              type="text"
-              class="text-sm mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              placeholder="Версия">
-          </label>
-          <label class="block">
-                <span class="text-gray-700">Описание</span>
-                <textarea
-                  v-model="db.model.description"
-                  class="text-sm mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                  rows="3"
-                ></textarea>
-              </label>
-        </div>
-        <p class="text-xs">Атомов: {{ db.items.length }}, связей: {{ db.references.length }}</p>
-      </div>
-    </div>
-    <!-- -------------------------------------------------- -->
-
-    <!-- Flyover: Groups -->
-    <div v-if="isLayerReady" :class="references ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-80 w-96 h-large overflow-hidden flex flex-col border shadow-xl border-t-2 border-t-purple-500">
-      <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
-        <div class="flex-1 font-bold">Управление связями</div>
-        <div>
-          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFlyover('references')">
-            <XIcon class="h-4 w-4 text-gray-400"/>
-          </div>
-        </div>
-      </div>
-      <div class="flex-1 bg-white overflow-auto px-4 pb-32 space-y-4 text-sm">
-        <div>
-          <label class="block">
-            <input type="text" class="
-                mt-1
-                block
-                w-full
-                rounded-md
-                border-gray-300
-                shadow-sm
-                text-sm
-                focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
-              " v-model="db.referenceName" placeholder="Название связи (например, инструменты)">
-          </label>
-        </div>
-        <Popover v-slot="{ open }" class="relative">
-          <PopoverButton
-            :class="open ? '' : 'opacity-90'"
-            class="rounded-full bg-gray-50 h-8 w-8 flex items-center justify-center cursor-pointer text-gray-500 hover:bg-gray-200 hover:text-gray-900"
-          >
-            <PlusSmIcon class="w-5 h-5" />
-          </PopoverButton>
-
-          <transition
-            enter-active-class="transition duration-200 ease-out"
-            enter-from-class="translate-y-1 opacity-0"
-            enter-to-class="translate-y-0 opacity-100"
-            leave-active-class="transition duration-150 ease-in"
-            leave-from-class="translate-y-0 opacity-100"
-            leave-to-class="translate-y-1 opacity-0"
-          >
-            <PopoverPanel class="absolute z-10 w-80 mt-1 transform -translate-x-1/2 left-40 sm:px-0 lg:max-w-3xl">
-              <div  class="bg-white overflow-hidden rounded shadow-lg ring-1 ring-black ring-opacity-5 p-4 space-y-4">
-                <p class="text-xs text-gray-600">Введите название</p>
-                <label class="block">
-                  <textarea class="
-                      mt-1
-                      block
-                      w-full
-                      rounded-md
-                      border-gray-300
-                      shadow-sm
-                      text-sm
-                      focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
-                    " rows="3" v-model="newReference"></textarea>
-                </label>
-                <button @click="addNewReference" class="bg-purple-600 text-white px-6 py-2 text-sm font-semibold rounded-lg">Создать</button>
-              </div>
-            </PopoverPanel>
-          </transition>
-        </Popover>
-        <div class="space-y-2">
-          <label
-            v-for="reference in db.references"
-            :key="reference.id"
-            class="block"
-          >
-            <input type="text" class="
-                mt-1
-                block
-                w-full
-                rounded-md
-                border-gray-300
-                shadow-sm
-                text-sm
-                focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
-              " v-model="reference.name">
-          </label>
-        </div>
-      </div>
-    </div>
-    <!-- -------------------------------------------------- -->
-
-    <!-- Flyover: Groups -->
-    <div v-if="isLayerReady" :class="groups ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-32 w-96 h-large overflow-hidden flex flex-col border shadow-xl border-t-2 border-t-purple-500">
-      <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
-        <div class="flex-1 font-bold">Управление группами</div>
-        <div>
-          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFlyover('groups')">
-            <XIcon class="h-4 w-4 text-gray-400"/>
-          </div>
-        </div>
-      </div>
-      <div class="flex-1 bg-white overflow-auto px-4 space-y-4 text-sm">
-        <Popover v-slot="{ open }" class="relative">
-          <PopoverButton
-            :class="open ? '' : 'opacity-90'"
-            class="rounded-full bg-gray-50 h-8 w-8 flex items-center justify-center cursor-pointer text-gray-500 hover:bg-gray-200 hover:text-gray-900"
-          >
-            <PlusSmIcon class="w-5 h-5" />
-          </PopoverButton>
-
-          <transition
-            enter-active-class="transition duration-200 ease-out"
-            enter-from-class="translate-y-1 opacity-0"
-            enter-to-class="translate-y-0 opacity-100"
-            leave-active-class="transition duration-150 ease-in"
-            leave-from-class="translate-y-0 opacity-100"
-            leave-to-class="translate-y-1 opacity-0"
-          >
-            <PopoverPanel class="absolute z-10 w-80 mt-1 transform -translate-x-1/2 left-40 sm:px-0 lg:max-w-3xl">
-              <div  class="bg-white overflow-hidden rounded shadow-lg ring-1 ring-black ring-opacity-5 p-4 space-y-4">
-                <p class="text-xs text-gray-600">Введите название новой группы.</p>
-                <label class="block">
-                  <textarea class="
-                      mt-1
-                      block
-                      w-full
-                      rounded-md
-                      border-gray-300
-                      shadow-sm
-                      text-sm
-                      focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
-                    " rows="3" v-model="newGroup"></textarea>
-                </label>
-                <button @click="addNewGroup" class="bg-purple-600 text-white px-6 py-2 text-sm font-semibold rounded-lg">Создать</button>
-              </div>
-            </PopoverPanel>
-          </transition>
-        </Popover>
-        <div class="space-y-2">
-          <label
-            v-for="group in db.groups"
-            :key="group.id"
-            class="block"
-          >
-            <input type="text" class="
-                mt-1
-                block
-                w-full
-                rounded-md
-                border-gray-300
-                shadow-sm
-                text-sm
-                focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
-              " v-model="group.name">
-          </label>
-        </div>
-      </div>
-    </div>
-    <!-- -------------------------------------------------- -->
-
-    <!-- Flyover: Fields -->
-    <div v-if="isLayerReady" :class="fields ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-32 w-96 h-large overflow-hidden flex flex-col border shadow-xl border-t-2 border-t-purple-500">
-      <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
-        <div class="flex-1 font-bold">Управление полями</div>
-        <div>
-          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFlyover('fields')">
-            <XIcon class="h-4 w-4 text-gray-400"/>
-          </div>
-        </div>
-      </div>
-      <div class="flex-1 bg-white overflow-auto px-4 space-y-4 text-sm">
-        <Popover v-slot="{ open }" class="relative">
-          <PopoverButton
-            :class="open ? '' : 'opacity-90'"
-            class="rounded-full bg-gray-50 h-8 w-8 flex items-center justify-center cursor-pointer text-gray-500 hover:bg-gray-200 hover:text-gray-900"
-          >
-            <PlusSmIcon class="w-5 h-5" />
-          </PopoverButton>
-
-          <transition
-            enter-active-class="transition duration-200 ease-out"
-            enter-from-class="translate-y-1 opacity-0"
-            enter-to-class="translate-y-0 opacity-100"
-            leave-active-class="transition duration-150 ease-in"
-            leave-from-class="translate-y-0 opacity-100"
-            leave-to-class="translate-y-1 opacity-0"
-          >
-            <PopoverPanel class="absolute z-10 w-80 mt-1 transform -translate-x-1/2 left-40 sm:px-0 lg:max-w-3xl">
-              <div  class="bg-white overflow-hidden rounded shadow-lg ring-1 ring-black ring-opacity-5 p-4 space-y-4">
-                <p class="text-xs text-gray-600">Введите название нового поля.</p>
-                <label class="block">
-                  <textarea class="
-                      mt-1
-                      block
-                      w-full
-                      rounded-md
-                      border-gray-300
-                      shadow-sm
-                      text-sm
-                      focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
-                    " rows="3" v-model="newField"></textarea>
-                </label>
-                <button @click="addNewField" class="bg-purple-600 text-white px-6 py-2 text-sm font-semibold rounded-lg">Создать</button>
-              </div>
-            </PopoverPanel>
-          </transition>
-        </Popover>
-        <Disclosure
-          v-for="field in db.fields"
-          :key="field.id"
-          v-slot="{ open }"
-        >
-          <DisclosureButton
-            class="flex justify-between w-full px-4 py-2 text-sm font-medium text-left text-purple-900 bg-purple-100 rounded-lg hover:bg-purple-200 focus:outline-none focus-visible:ring focus-visible:ring-purple-500 focus-visible:ring-opacity-75"
-          >
-            <span class="line-clamp-1">{{ field.name }}</span>
-            <ChevronUpIcon
-              :class="open ? 'transform rotate-180' : ''"
-              class="w-5 h-5 text-purple-500"
-            />
-          </DisclosureButton>
-          <DisclosurePanel class="px-2 pt-2 pb-2 text-sm text-gray-500 space-y-1">
-            <div class="pb-4">
-              <label class="block">
-                <span class="font-bold text-black">Название поля</span>
-                <input type="text" class="
-                    mt-1
-                    block
-                    w-full
-                    rounded-md
-                    border-gray-300
-                    shadow-sm
-                    focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
-                  " placeholder="Название" v-model="field.name">
-              </label>
-            </div>
-            <div>
-              <label class="inline-flex items-center">
-                <input
-                  type="checkbox"
-                  class="rounded border-gray-300 text-purple-600 shadow-sm focus:border-purple-300 focus:ring focus:ring-offset-0 focus:ring-purple-200 focus:ring-opacity-50 cursor-pointer" 
-                  v-model="field.showInDetals"
-                >
-                <span class="ml-2">Показывать поле в деталях атома</span>
-              </label>
-            </div>
-            <div>
-              <label class="inline-flex items-center">
-                <input
-                  type="checkbox"
-                  class="rounded border-gray-300 text-purple-600 shadow-sm focus:border-purple-300 focus:ring focus:ring-offset-0 focus:ring-purple-200 focus:ring-opacity-50 cursor-pointer" 
-                  v-model="field.showInPopper"
-                >
-                <span class="ml-2">Показывать поле в подсказке</span>
-              </label>
-            </div>
-            <div>
-              <label class="inline-flex items-center">
-                <input
-                  type="checkbox"
-                  class="rounded border-gray-300 text-purple-600 shadow-sm focus:border-purple-300 focus:ring focus:ring-offset-0 focus:ring-purple-200 focus:ring-opacity-50 cursor-pointer" 
-                  v-model="field.showInGrid"
-                >
-                <span class="ml-2">Показывать поле в сетке</span>
-              </label>
-            </div>
-                        <div>
-              <label class="inline-flex items-center">
-                <input
-                  type="checkbox"
-                  class="rounded border-gray-300 text-purple-600 shadow-sm focus:border-purple-300 focus:ring focus:ring-offset-0 focus:ring-purple-200 focus:ring-opacity-50 cursor-pointer" 
-                  v-model="field.searchable"
-                >
-                <span class="ml-2">Учитывать поле при поиске</span>
-              </label>
-            </div>
-            <div>
-              <label class="inline-flex items-center">
-                <input
-                  type="checkbox"
-                  class="rounded border-gray-300 text-purple-600 shadow-sm focus:border-purple-300 focus:ring focus:ring-offset-0 focus:ring-purple-200 focus:ring-opacity-50 cursor-pointer" 
-                  v-model="field.filterable"
-                >
-                <span class="ml-2">Учитывать поле при фильтрации</span>
-              </label>
-            </div>
-          </DisclosurePanel>
-        </Disclosure>
-      </div>
-    </div>
-    <!-- -------------------------------------------------- -->
-
-    <!-- Flyover: Load -->
-    <div :class="load ? 'translate-y-0' : 'translate-y-full'" class="z-40 transition absolute bottom-9 right-4 w-96 h-96 overflow-hidden flex flex-col border shadow-xl border-t-2 border-t-purple-500">
-      <div class="h-16 bg-white flex items-center justify-between px-4 space-x-2">
-        <div class="flex-1 font-bold">Загрузка файла</div>
-        <div>
-          <div class="hover:bg-gray-100 cursor-pointer rounded-full h-6 w-6 flex items-center justify-center" @click="hideFlyover('load')">
-            <XIcon class="h-4 w-4 text-gray-400"/>
-          </div>
-        </div>
-      </div>
-      <div class="flex-1 bg-white overflow-auto px-4 space-y-4">
-        <p class="text-sm text-gray-500">
-          Выберите json-файл для загрузки
-        </p>
-        <div class="h-16 bg-gray-50 border border-dashed rounded-lg my-4 flex items-center justify-center text-xs text-gray-500">
-          <div v-bind="getRootProps()">
-            <input v-bind="getInputProps()" >
-            <p v-if="isDragActive">Перетащите файл сюда...</p>
-            <p v-else class="cursor-pointer">Перетащите файл сюда или кликните для выбора</p>
-          </div>
-        </div>
-        <p class="text-sm text-gray-500">Или выберите одну из стандартных моделей</p>
-        <div class="text-sm text-gray-600">
-          <p @click="loadDefault()" class="hover:underline hover:text-gray-800 cursor-pointer">Пустая модель</p>
-        </div>
-      </div>
-    </div>
-    <!-- -------------------------------------------------- -->
-
+    <fly-over-about
+      :visible="about"
+      :hideFn="hideFlyover"
+    />
+    <fly-over-description
+      :visible="desc"
+      :hideFn="hideFlyover"
+      :is-layer-ready="isLayerReady"
+      :db="db"
+    />
+    <fly-over-references
+      :visible="references"
+      :hideFn="hideFlyover"
+      :is-layer-ready="isLayerReady"
+      :db="db"
+    />
+    <fly-over-groups
+      :visible="groups"
+      :hideFn="hideFlyover"
+      :is-layer-ready="isLayerReady"
+      :db="db"
+    />
+    <fly-over-fields
+      :visible="fields"
+      :hideFn="hideFlyover"
+      :is-layer-ready="isLayerReady"
+      :db="db"
+    />
+    <fly-over-load
+      :visible="load"
+      :hideFn="hideFlyover"
+      :is-layer-ready="isLayerReady"
+      :db="db"
+      :active-item="activeItem"
+      :version="actualJSONVersion"
+      @set-db="setDB"
+      @set-layer-ready="setLayerReady"
+      @set-active-item="setActiveItem"
+    />
     <!-- -------------------------------------------------- -->
     
     <div class="flex-1 flex">
@@ -651,6 +245,12 @@ export default {
               class="rounded-lg h-8 w-8 flex items-center justify-center cursor-pointer text-gray-500 hover:bg-gray-200 hover:text-gray-900"
             >
               <FireIcon class="w-5 h-5" @click="heatmap = !heatmap" />
+            </div>
+            <div
+              :class="[poppers ? 'bg-purple-50 text-purple-500 border border-purple-100' : 'bg-gray-50 text-gray-500']"
+              class="rounded-lg h-8 w-8 flex items-center justify-center cursor-pointer text-gray-500 hover:bg-gray-200 hover:text-gray-900"
+            >
+              <ChatAltIcon class="w-5 h-5" @click="poppers = !poppers" />
             </div>
             <Popover v-slot="{ open }" class="relative">
               <PopoverButton
@@ -701,171 +301,46 @@ export default {
             style="height: calc(100vh - 6.5rem);"
           >
             <!-- Non-group -->
-            <div v-if="filterByGroup(0).length > 0">
-              <transition-group
-                name="flip-list"
-                tag="div"
-                class="p-4 pt-12 grid"
-                :class="[heatmap ? 'grid-cols-6 lg:grid-cols-7 xl:grid-cols-10 pb-4' : 'grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pb-32']"
-              >
-                <Popper
-                  hover
-                  arrow
-                  placement="bottom"
-                  v-for="item in filterByGroup(0)"
-                  :key="item.id"
-                >
-                  <div
-                    @click="setActiveItem(item.id)"
-                    :class="[(activeItem && activeItem.id === item.id) ? 'ring-2 ring-offset-1 ring-purple-500 ring-opacity-40 bg-purple-50' : '']"
-                    class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded p-2"
-                  >
-                    <div
-                      class="h-12 w-12 rounded border flex items-center px-2"
-                      :class="[item.color, heatmap ? 'h-12 flex-1' : 'h-12 w-12 flex-shrink-0 ']"
-                    >
-                      <div v-if="heatmap" class="font-bold text-xs line-clamp-1">{{ item.name }}</div>
-                    </div>
-                    <div class="flex-1" v-if="!heatmap">
-                      <div class="font-bold text-xs line-clamp-1">{{ item.name }}</div>
-                      <div
-                        class="text-xs text-gray-500 line-clamp-1"
-                        v-for="field in item.fields"
-                        :key="field.id"
-                      >
-                        <div v-if="getFieldById(field.id).showInGrid">{{ field.value }}</div>
-                      </div>
-                      <div v-if="item.references.length > 0" class="text-xs text-gray-500 line-clamp-1">
-                        <span
-                          v-for="(reference, index) in item.references"
-                          :key="reference"
-                        >{{ getReferenceById(reference).name }}<span v-if="index < item.references.length - 1">, </span></span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <template #content>
-                    <div class="space-y-2">
-                      <div class="font-bold">{{ item.name }}</div>
-                      <div>Оценка: {{ item.score }}</div>
-                      <div v-if="item.note">{{ item.note }}</div>
-                    </div>
-                  </template>
-                </Popper>
-              </transition-group>
-            </div>
+            <Grid
+              v-if="filterByGroup(0).length > 0"
+              :poppers="poppers"
+              :heatmap="heatmap"
+              :items="filterByGroup(0)"
+              :active-item="activeItem"
+              :get-field-by-id-fn="getFieldById"
+              :get-reference-by-id-fn="getReferenceById"
+              :set-active-item-fn="setActiveItem"
+              style="height: calc(100vh - 6.5rem);"
+              class="overflow-y-auto px-8"
+            />
             <!-- Group exist -->
-            <div
+            <Grid
               v-for="group in nonEmptyGroups"
               :key="group.id"
-            >
-              <header class="font-bold px-4" :class="[heatmap ? 'py-0 px-6 text-sm' : 'py-6']">{{ group.name }}</header>
-              <transition-group
-                name="flip-list"
-                tag="div"
-                class="p-4 grid"
-                :class="[heatmap ? 'grid-cols-6 lg:grid-cols-7 xl:grid-cols-10 pb-4 pt-4' : 'grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pb-32 pt-12']"
-              >
-                <Popper
-                  hover
-                  arrow
-                  placement="bottom"
-                  v-for="item in filterByGroup(group.id)"
-                  :key="item.id"
-                >
-                  <div
-                    @click="setActiveItem(item.id)"
-                    :class="[(activeItem && activeItem.id === item.id) ? 'ring-2 ring-offset-1 ring-purple-500 ring-opacity-40 bg-purple-50' : '']"
-                    class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded p-2"
-                  >
-                    <div
-                      class="h-12 w-12 rounded border flex items-center px-2"
-                      :class="[item.color, heatmap ? 'h-12 flex-1' : 'h-12 w-12 flex-shrink-0 ']"
-                    >
-                      <div v-if="heatmap" class="font-bold text-xs line-clamp-1">{{ item.name }}</div>
-                    </div>
-                    <div class="flex-1" v-if="!heatmap">
-                      <div class="font-bold text-xs line-clamp-1">{{ item.name }}</div>
-                      <div
-                        class="text-xs text-gray-500 line-clamp-1"
-                        v-for="field in item.fields"
-                        :key="field.id"
-                      >
-                        <div v-if="getFieldById(field.id).showInGrid">{{ field.value }}</div>
-                      </div>
-                      <div v-if="item.references.length > 0" class="text-xs text-gray-500 line-clamp-1">
-                        <span
-                          v-for="(reference, index) in item.references"
-                          :key="reference"
-                        >{{ getReferenceById(reference).name }}<span v-if="index < item.references.length - 1">, </span></span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <template #content>
-                    <div class="space-y-2">
-                      <div class="font-bold">{{ item.name }}</div>
-                      <div>Оценка: {{ item.score }}</div>
-                      <div v-if="item.note">{{ item.note }}</div>
-                    </div>
-                  </template>
-                </Popper>
-              </transition-group>
-            </div>
+              :header="group.name"
+              :poppers="poppers"
+              :heatmap="heatmap"
+              :items="filterByGroup(group.id)"
+              :active-item="activeItem"
+              :get-field-by-id-fn="getFieldById"
+              :get-reference-by-id-fn="getReferenceById"
+              :set-active-item-fn="setActiveItem"
+              style="height: calc(100vh - 6.5rem);"
+              class="overflow-y-auto px-8"
+            />
           </div>
-          <div v-else style="height: calc(100vh - 6.5rem);" class="overflow-y-auto px-8">
-            <transition-group
-              name="flip-list"
-              tag="div"
-              class="p-4 pt-12 pb-32 grid"
-              :class="[heatmap ? 'grid-cols-6 lg:grid-cols-7 xl:grid-cols-10' : 'grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4']"
-            >
-              <Popper
-                hover
-                arrow
-                placement="bottom"
-                v-for="item in searchResults"
-                :key="item.id"
-              >
-                <div
-                  @click="setActiveItem(item.id)"
-                  :class="[(activeItem && activeItem.id === item.id) ? 'ring-2 ring-offset-1 ring-purple-500 ring-opacity-40 bg-purple-50' : '']"
-                  class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded p-2"
-                >
-                  <div
-                    class="h-12 w-12 rounded border flex items-center px-2"
-                    :class="[item.color, heatmap ? 'h-12 flex-1' : 'h-12 w-12 flex-shrink-0 ']"
-                  >
-                    <div v-if="heatmap" class="font-bold text-xs line-clamp-1">{{ item.name }}</div>
-                  </div>
-                  <div class="flex-1" v-if="!heatmap">
-                    <div class="font-bold text-xs line-clamp-1">{{ item.name }}</div>
-                    <div
-                      class="text-xs text-gray-500 line-clamp-1"
-                      v-for="field in item.fields"
-                      :key="field.id"
-                    >
-                      <div v-if="getFieldById(field.id).showInGrid">{{ field.value }}</div>
-                    </div>
-                    <div v-if="item.references.length > 0" class="text-xs text-gray-500 line-clamp-1">
-                      <span
-                        v-for="(reference, index) in item.references"
-                        :key="reference"
-                      >{{ getReferenceById(reference).name }}<span v-if="index < item.references.length - 1">, </span></span>
-                    </div>
-                  </div>
-                </div>
-
-                <template #content>
-                  <div class="space-y-2">
-                    <div class="font-bold">{{ item.name }}</div>
-                    <div>Оценка: {{ item.score }}</div>
-                    <div v-if="item.note">{{ item.note }}</div>
-                  </div>
-                </template>
-              </Popper>
-            </transition-group>
-          </div>
+          <Grid
+            v-else
+            :poppers="poppers"
+            :heatmap="heatmap"
+            :items="searchResults"
+            :active-item="activeItem"
+            :get-field-by-id-fn="getFieldById"
+            :get-reference-by-id-fn="getReferenceById"
+            :set-active-item-fn="setActiveItem"
+            style="height: calc(100vh - 6.5rem);"
+            class="overflow-y-auto px-8"
+          />
         </div>
         <!-- -------------------------------------------------- -->
       </div>
@@ -884,6 +359,18 @@ export default {
             <div>
               <div @click="activeItem = undefined" class="flex items-center justify-center rounded-lg h-8 w-8 bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700 cursor-pointer">
                 <XIcon class="w-5 h-5" />
+              </div>
+            </div>
+          </section>
+
+          <!-- Custom fields -->
+          <section
+            v-for="field in activeItem.fields"
+            :key="field.id"
+          >
+            <div v-if="getFieldById(field.id).showInHeader && field.value" class="space-y-2">
+              <div class="atom-prose font-semibold">
+                <Markdown :source="field.value" />
               </div>
             </div>
           </section>
@@ -990,12 +477,12 @@ export default {
                 >
                   <PopoverPanel class="absolute z-10 w-80 mt-1 transform -translate-x-1/2 left-40 sm:px-0 lg:max-w-3xl">
                     <div class="bg-white overflow-auto rounded shadow-lg ring-1 ring-black ring-opacity-5 p-2">
-                      <div @click="activeItem.groupId = 0" :class="[0 === activeItem.groupId ? 'font-bold' : '']" class="p-2 text-sm hover:bg-gray-100 cursor-pointer rounded-lg line-clamp-1">Без группы</div>
+                      <div @click="activeItem.groupId = 0" :class="[0 === activeItem.groupId ? 'font-bold' : '']" class="px-2 py-1 text-sm hover:bg-gray-100 cursor-pointer rounded-lg line-clamp-1">Без группы</div>
                       <div
                         v-for="group in db.groups"
                         :key="group.id"
                         :class="[group.id === activeItem.groupId ? 'font-bold' : '']"
-                        class="p-2 text-sm hover:bg-gray-100 cursor-pointer rounded-lg line-clamp-1"
+                        class="px-2 py-1 text-sm hover:bg-gray-100 cursor-pointer rounded-lg line-clamp-1"
                         @click="activeItem.groupId = group.id"
                       >{{ group.name }}</div>
                     </div>
@@ -1121,7 +608,7 @@ export default {
           >
             <div v-if="getFieldById(field.id).showInDetals && field.value" class="text-xs space-y-2">
               <header class="uppercase font-bold text-gray-500">{{ getFieldById(field.id).name }}</header>
-              <div>
+              <div class="atom-prose">
                 <Markdown :source="field.value" />
               </div>
             </div>
