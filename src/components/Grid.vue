@@ -45,8 +45,8 @@ export default {
             v-if="poppers"
             name="flip-list"
             tag="div"
-            class="p-4 pt-12 grid"
-            :class="[heatmap ? 'grid-cols-6 lg:grid-cols-7 xl:grid-cols-10 pb-4' : 'gris-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-4 pb-32']"
+            class="px-2 grid"
+            :class="[heatmap ? 'grid-cols-6 lg:grid-cols-7 xl:grid-cols-10 pb-4' : 'gris-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-4 pb-12']"
         >
             <Popper
                 hover
@@ -77,8 +77,8 @@ export default {
             v-else
             name="flip-list"
             tag="div"
-            class="p-4 pt-12 grid"
-            :class="[heatmap ? 'grid-cols-6 lg:grid-cols-7 xl:grid-cols-10 pb-4' : 'gris-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-4 pb-32']"
+            class="px-2 grid"
+            :class="[heatmap ? 'grid-cols-6 lg:grid-cols-7 xl:grid-cols-10 pb-4' : 'gris-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-4 pb-12']"
         >
             <Item
                 v-for="item in items"

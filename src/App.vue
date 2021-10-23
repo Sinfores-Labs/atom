@@ -296,8 +296,7 @@ export default {
         <!-- -------------------------------------------------- -->
         <div v-if="isLayerReady" class="pb-32 overflow-hidden" style="height: calc(100vh - 6.5rem);">
           <div v-if="viewBoard"
-            :class="[heatmap ? 'space-y-1' : 'space-y-12']"
-            class="px-12 py-4 pb-32 overflow-y-auto"
+            class="px-2 py-4 pb-32 overflow-y-auto space-y-1"
             style="height: calc(100vh - 6.5rem);"
           >
             <!-- Non-group -->
@@ -310,7 +309,6 @@ export default {
               :get-field-by-id-fn="getFieldById"
               :get-reference-by-id-fn="getReferenceById"
               :set-active-item-fn="setActiveItem"
-              style="height: calc(100vh - 6.5rem);"
               class="overflow-y-auto px-8"
             />
             <!-- Group exist -->
@@ -325,7 +323,6 @@ export default {
               :get-field-by-id-fn="getFieldById"
               :get-reference-by-id-fn="getReferenceById"
               :set-active-item-fn="setActiveItem"
-              style="height: calc(100vh - 6.5rem);"
               class="overflow-y-auto px-8"
             />
           </div>
