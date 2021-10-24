@@ -74,10 +74,29 @@ export default {
           }
         }
 
+        const convert = (field, newType) => {
+          field.type = newType
+          props.db.items.forEach(item => {
+            item.fields.forEach(f => {
+              if (f.id === field.id) {
+                switch (newType) {
+                  case "bool":
+                    f.value = false
+                    break
+                  case "text":
+                    f.value = ""
+                    break
+                }
+              }
+            })
+          })
+        }
+
         return {
             newField,
             add,
             remove,
+            convert,
             fieldTypes,
             hideFlyover,
             fields
@@ -183,7 +202,7 @@ export default {
                         <div
                           v-for="(fieldType, index) in fieldTypes"
                           :key="index"
-                          @click="field.type = fieldType.value; close()"
+                          @click="convert(field, fieldType.value); close()"
                           class="cursor-pointer hover:bg-gray-100 py-3 px-3 rounded"
                         >{{ fieldType.label }}</div>
                       </div>
