@@ -58,3 +58,15 @@ ul {
 .atom-prose p {
   @apply py-1;
 }
+
+.contains-task-list {
+  @apply list-none;
+  @apply ml-0;
+  @apply pt-2;
+  @apply space-y-2;
+}
+
+.task-list-item-checkbox {
+  @apply text-black;
+  @apply rounded;
+}

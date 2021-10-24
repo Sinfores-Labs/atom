@@ -27,7 +27,8 @@
             ],
             "groupId": 0,
             "fields": [],
-            "references": []
+            "references": [],
+            "active": true
         }
     ],
     "referenceName": "",
