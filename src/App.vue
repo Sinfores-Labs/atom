@@ -12,6 +12,7 @@ import { useActiveLayer } from '/src/composables/activeLayer'
 import { usePopper } from '/src/composables/popper'
 import { useBoard } from '/src/composables/board'
 import { useHeatmap } from '/src/composables/heatmap'
+import { useLayersMenu } from '/src/composables/layersMenu'
 import { swatches } from '/src/data/swatches'
 
 import Grid from '/src/components/Grid.vue'
@@ -37,6 +38,7 @@ export default {
     const { board, toggleBoard } = useBoard()
     const { popper, togglePopper } = usePopper()
     const { heatmap, toggleHeatmap } = useHeatmap()
+    const { isLayersMenuVisible, toggleLayersMenu } = useLayersMenu()
 
     const db = ref(undefined)
     const { activeLayer, setActiveLayer } = useActiveLayer()
@@ -180,8 +182,9 @@ export default {
       board, toggleBoard,
       popper, togglePopper,
       heatmap, toggleHeatmap,
+      isLayersMenuVisible, toggleLayersMenu,
       db, setDB,
-      isLayerReady, setLayerReady, activeLayer,
+      isLayerReady, setLayerReady, activeLayer, setActiveLayer,
       activeItem, setActiveItem, isAdditionalFieldsVisible, isWideDetails,
       newItem, addNewItem, deleteItem,
       getGroupById, getFieldById,
@@ -226,9 +229,16 @@ export default {
       <div class="flex-1 flex flex-col">
         <!-- Search & Actions-->
         <!-- -------------------------------------------------- -->
-        <div v-if="isLayerReady" class="h-16 flex items-center justify-between px-12 space-x-4">
-          <div class="flex-1">
-            <label class="block">
+        <div v-if="isLayerReady" class="h-16 flex items-center justify-between relative">
+          <!-- Search -->
+          <div class="flex-1 pl-12 flex items-center space-x-4">
+            <div
+              @click="toggleLayersMenu()"
+              class="rounded-lg h-8 w-8 flex items-center justify-center cursor-pointer text-gray-500 hover:bg-gray-200 hover:text-gray-900"
+            >
+              <CollectionIcon class="w-5 h-5" />
+            </div>
+            <label class="block flex-1">
               <input
                 v-model="searchQuery"
                 type="text"
@@ -237,7 +247,8 @@ export default {
               />
             </label>
           </div>
-          <div class="flex items-center space-x-2">
+          <!-- Actions -->
+          <div class="flex items-center space-x-2 px-4">
             <div class="rounded-lg bg-gray-50 h-8 w-8 flex items-center justify-center cursor-pointer text-gray-500 hover:bg-gray-200 hover:text-gray-900">
               <ViewGridIcon v-if="board" class="w-5 h-5" @click="toggleBoard()" />
               <ViewBoardsIcon v-else class="w-5 h-5" @click="toggleBoard()" />
@@ -290,6 +301,27 @@ export default {
                 </PopoverPanel>
               </transition>
             </Popover>
+          </div>
+
+          <div
+            :class="[isLayersMenuVisible ? 'translate-x-0' : '-translate-x-full']"
+            class="absolute inset-0 bg-gray-100 flex items-center px-12 transition-all overflow-hidden space-x-6"
+          >
+            <div
+              @click="toggleLayersMenu()"
+              class="rounded-lg h-8 w-8 flex items-center justify-center cursor-pointer text-gray-500 hover:bg-gray-200 hover:text-gray-900"
+            >
+              <XIcon class="w-5 h-5" />
+            </div>
+            <div class="flex-1 overflow-x-auto flex items-center space-x-6">
+              <div
+                v-for="layer in db.layers"
+                :key="layer.id"
+                :class="[layer.id === activeLayer.id ? 'border-purple-500' : 'border-transparent']"
+                class="border-b-2 cursor-pointer"
+                @click="setActiveLayer(layer)"
+              >{{ layer.name }}</div>
+            </div>
           </div>
         </div>
         <!-- -------------------------------------------------- -->
